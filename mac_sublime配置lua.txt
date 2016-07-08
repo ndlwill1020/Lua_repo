@@ -1,0 +1,28 @@
+mac:终端
+curl -R -O http://www.lua.org/ftp/lua-5.3.2.tar.gz
+tar zxf lua-5.3.2.tar.gz
+cd lua文件夹中
+make macosx
+//make test
+sudo make install
+
+control + c  停止操作
+
+which lua  //lua命令所在的路径  /usr/local/bin/lua
+
+===================================
+Sublime Text2
+Tools->Build System->New Build System
+配置Lua环境
+{  
+	"cmd": ["/usr/local/bin/lua", "$file"],  
+	"file_regex": "^(...*?):([0-9]*):?([0-9]*)",  
+	"selector": "source.lua"  
+}  
+
+编写lua文件 command＋b编译
+
+安装Package Contorl
+View->Show Console(control+~)
+
+import urllib2,os; pf='Package Control.sublime-package'; ipp=sublime.installed_packages_path(); os.makedirs(ipp) if not os.path.exists(ipp) else None; urllib2.install_opener(urllib2.build_opener(urllib2.ProxyHandler())); open(os.path.join(ipp,pf),'wb').write(urllib2.urlopen('http://sublime.wbond.net/'+pf.replace(' ','%20')).read()); print 'Please restart Sublime Text to finish installation'
