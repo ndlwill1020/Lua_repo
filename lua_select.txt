@@ -1,0 +1,12 @@
+--传入一个固定实参selector(选择开关)和一系列变长参数。
+如果selector为数字n,那么select返回它的第n个可变实参，
+否则只能为字符串"#",这样select会返回变长参数的总数
+
+function foo(...)  
+    for i = 1, select('#', ...) do 
+        local arg = select(i, ...);
+        print(arg);  
+    end  
+end  
+  
+foo(1, 2, 3, 4);  

@@ -1,0 +1,215 @@
+local tb1 = {a = 1, b = 2}
+local tb2 = {a = 1, b = 2}
+local tb3 = tb1
+
+if tb1 == tb2 then
+     print("tb1 == tb2")
+else
+     print("tb1 ~= tb2")
+end
+
+tb3.a = 3
+print(tb1.a)
+
+上述代码会输出tb1 ~= tb2。说明两个具有相同值得对象是两个不同的对象，同时在Lua中table是引用类型的
+
+
+-------------------------------------------------------
+Account = {balance = 0}
+function Account.withDraw(self, v)
+     self.balance = self.balance - v  --self  指定实际的操作对象###############a.withDraw(a, 100)   self就代表a
+end
+
+a = Account
+Account = nil  --##如果上面的方法写Account.balance = Account.balance - v下面a.withDraw(a, 100)调用会报错所以得用self代替
+a.withDraw(a, 100)
+print(a.balance)
+
+--使用了冒号，则能隐藏self该参数
+Account = {balance = 0}
+function Account:withDraw(v) -- 注意这里的冒号":"
+     self.balance = self.balance - v
+end
+
+a = Account
+Account = nil
+a:withDraw(100) -- 注意这里的调用时，也需要冒号":"
+print(a.balance)
+--------------------------------------------------------类：
+把table类型变量当成对象使用
+类的实现：
+类是对象的模板，一个类可以创建出多个对象。实现类就是把Student作为原型对象，原型就是一个模板
+通过Student原型来创建其他对象，那么可将Student原型对象称为类了
+创建的对象遇到一个未知操作（方法），会到Student原型中去查找，这也符合类的继承原则
+
+Student = {id = 100, name= "cc"}
+function Student:toString()
+	local s= "Name:"..self.name..":".."id:"..self.id
+	return s
+end
+
+function Student:create(o) --o是table类型的参数
+	o = o or {}--当参数o没有创建的时候，重新创建一个空table
+	setmetatable(o,self)--把self当做metatable（元表）设置给o对象，每个table都可以加上原表，原表可以改变相应的table的行为
+	self.__index =self--首先在当前对象中查找操作，如果没有就会到原型Student中查找操作
+	return o
+end
+
+stu = Student:create({id = 100, name = "jdj"}) --通过Student原型类创建stu对象
+stu:toString()
+
+
+===================================
+
+要表示一个类，只需创建一个专用作其他对象的原型（prototype）。原型也是一种常规的对象，也就是说我们可以直接通过原型去调用对应的方法。当其它对象（类的实例）遇到一个未知操作时，原型会先查找它。
+
+
+如有两个对象a和b，要让b作为a的原型，只需要以下代码就可以完成：
+setmetatable(a, {__index = b}) --a就会在b中查找所有它没有的操作。若将b称为是对象a的“类”
+
+local Account = {}  -- 一个原型
+
+function Account:new(o)  -- 这里是冒号哦
+     o = o or {}  -- 如果用户没有提供table，则创建一个
+     setmetatable(o, self)
+     self.__index = self
+     return o
+end
+当调用Account:new时，self就相当于Account。接着，我们就可以调用Account:new来创建一个实例了
+
+local a = Account:new{value = 100} -- 这里使用原型Account创建了一个对象a
+a:display()
+首先使用Account:new创建了一个新的实例对象，并将Account作为新的实例对象a的元表。再当我们调用a:display函数时，就相当于a.display(a)，
+创建了一个实例对象a，当调用display时，就会查找a中是否有display字段，没有的话，就去搜索它的元表
+a的元表是Account，Account的__index也是Account
+
+
+=======================================
+local Account = {value = 0}
+
+function Account:new(o)  -- 这里是冒号哦
+     o = o or {}  -- 如果用户没有提供table，则创建一个
+     setmetatable(o, self)
+     self.__index = self
+     return o
+end
+
+function Account:display()
+     self.value = self.value + 100
+     print(self.value)
+end
+
+local a = Account:new{} 
+getmetatable(a).__index:display()或者getmetatable(a).__index.display(a)
+
+--------------------------------------------------------------继承：
+local CA = {value = 0}
+
+function CA:new(o)
+     o = o or {}
+     setmetatable(o, self)
+     self.__index = self
+     return o
+end
+
+function CA:display()
+     print(self.value)
+end
+
+function CA:addValue(v)
+     self.value = self.value + v
+end
+
+现在需要从这个CA类派生出一个子类CLittleA，则需要创建一个空的类，从基类继承所有的操作：
+local CLittleA = CA:new()
+
+创建了一个CA类的一个实例对象，在Lua中，现在CLittleA既是CA类的一个实例对象，也是一个原型，就是所谓的类，就相当于CLittleA类继承自CA类
+
+local s = CLittleA:new{value1 = 10}
+CLittleA从CA继承了new；不过，在执行CLittleA:new时，它的self参数表示为CLittleA，所以s的元表为CLittleA，CLittleA中字段__index的值也是CLittleA。然后，我们就会看到，s继承自CLittleA，而CLittleA又继承自CA。当执行s:display时，Lua在s中找不到display字段，就会查找CLittleA；如果仍然找不到display字段，就查找CA，最终会在CA中找到display字段。可以这样想一下，如果在CLittleA中存在了display字段，那么就不会去CA中再找了。所以，我们就可以在CLittleA中重定义display字段，从而实现特殊版本的display函数
+
+--------------------------------------------------------------多重继承:
+不能像单继承那样，直接指定__index为某个父类，而是应该指定__index为一个函数，在这个函数中指定搜索不存在的字段的规则
+
+-- 在多个父类中查找字段k
+local function search(k, pParentList)
+    for i = 1, #pParentList do
+        local v = pParentList[i][k]
+        if v then
+            return v
+        end
+    end
+end
+
+function createClass(...)
+    local c = {} -- 新类
+    local parents = {...}
+
+
+    -- 为这个新类建立一个新的构造函数
+    function c:new(o)
+        o = o or {}
+        setmetatable(o, {__index = function (t, k) return search(k, parents) end})
+
+        return o
+    end
+
+    -- 返回新的类（原型）
+    return c
+end
+
+--------------------------------------- 一个简单的类CA
+local CA = {}
+function CA:new(o)
+    o = o or {}
+    setmetatable(o, {__index = self})
+    self.__index = self
+    return o
+end
+
+function CA:setName(strName)
+    self.name = strName
+end
+
+---------------------------------------- 一个简单的类CB
+local CB = {}
+function CB:new(o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+
+function CB:getName()
+    return self.name
+end
+
+-- 创建一个c类，它的父类是CA和CB
+local c = createClass(CA, CB)
+
+-- 使用c类创建一个实例对象
+local objectC = c:new{name = "Jelly"}
+
+-- 设置objectC对象一个新的名字
+objectC:setName("JellyThink")
+local newName = objectC:getName()
+print(newName)
+
+
+--------------------------------------------------------------访问权限:
+function newObject(defaultName)
+     local self = {name = defaultName}
+     local setName = function (v) self.name = v end
+     local getName = function () return self.name end
+     return {setName = setName, getName = getName}
+end
+
+local objectA = newObject("Jelly")
+objectA.setName("JellyThink") -- 这里没有使用冒号访问
+print(objectA.getName())
+
+这种设计给予存储在self table中所有东西完全的私密性。当调用newObject返回以后，就无法直接访问这个table了。只能通过newObject中创建的函数来访问这个self table；也就相当于self table中保存的都是私有的，外部是无法直接访问的
+
+
+
+

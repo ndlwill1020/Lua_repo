@@ -1,0 +1,88 @@
+------------------------------------table长度 ：
+t_ = {nil, 1, 2, "dd", nil, 4, nil, nil, 7}
+i = 0  
+for k,v in pairs(t_) do 
+    print(k..":"..v) --输出v不为nil的
+    i = i + 1 
+end 
+print(#t_)  --9  计算的是数组的长度 下标为数字的
+print(table.maxn(t_))  --9  计算的是数组的长度 下标为数字的
+print(i)    --5
+
+
+
+
+local a = {} -- 创建一个table
+a["x"] = 10
+local b = a  -- b与a引用同一个table
+print(b["x"])   --10
+b["x"] = 20
+print(a["x"])   --20
+b = nil -- 现在只有a还在引用table
+-- 错误：print(b["x"])
+print(a["x"])   --20
+a = nil -- 现在不存在对table的引用   
+
+
+
+我就常常会把a.x和a[x]搞错，a.x表示a[“x”]，表示以字符串”x”来索引table；而a[x]是以变量x的值来索引table
+
+--注意区分tab["a"]和tab[a]这俩种形式，第一种代表的索引是字符串a，可以使用等价的形式tab.a来访问它的值
+--第二种代表的是使用a这个变量的值作为索引来访问
+local a = "haha"
+local tab2 = {a="hello",[a]="lua"}
+print(tab2.a) -->hello
+print(tab2[a]) -->lua
+
+
+
+local t = {"ndl","cc"} --数组 lua第一个元素的索引值是1
+print(t[1])   --表示输出索引为1（下标为1，第一个元素）的值，即ndl
+
+local num = {1,2,3,4,5}  --数组
+--其实num的初始化等价于如下
+local num = {[1]=1,[2]=2,[3]=3,[4]=4,[5]=5}
+print(num[1]) -->1
+
+local tab = {a=1,b=2}   --字典
+--等价于如下的初始化
+local tab = {["a"]=1,["b"]=2}
+print(tab["a"]) -->1    --等价于print(tab.a) -->1
+
+
+--一个表中可以混合各种类型的值，可以是boolean,字符串，表，函数，等等
+local tab3 = {color="blue",{x=0,   y=0},thickness=2, npoints=false,
+              {x=-10, y=0},
+              {x=-30, y=1},
+              {x=0,   y=1}
+}
+--没有添加索引的时候索引默认从1开始
+print(tab3[2].x)     -->{x=-10, y=0}中的x   -10
+
+
+========================================================cocos2d-lua关东升
+lua唯一描述数据结构的类型
+
+字典：
+Student = {id = "100",name = "ndl"}
+Student1 = {["id"] = "100",["name"] = "ndl"}
+
+Student["id"]   Student.id
+
+遍历
+for k,v in pairs(Student) do --pairs函数返回键k和值v
+	print(k..":"..v)
+end
+
+数组：对于数组的键就是索引
+local stu = {"1","2","3"}
+
+for i,v in ipairs(stu) do --ipairs函数返回索引i和值v,ipairs不能用于字典table遍历
+end
+
+for k,v in pairs(stu) do
+end
+
+for i = 1, #stu  do --典型for循环 #stu获取数组长度 或（table.maxn(stu)）
+	print(i..":"..stu[i])
+en d 

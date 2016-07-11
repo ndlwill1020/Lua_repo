@@ -1,0 +1,21 @@
+Lua将其所有的全局变量保存在一个常规的table中，这个table称为“环境”。
+Lua将环境table自身保存在一个全局变量_G中
+
+打印当前环境中所有全局变量的名称。
+for key, var in pairs(_G) do
+	print(key)
+	print(var)
+end
+
+
+
+
+=====================================
+a = 1 -- 这里创建了一个全局变量
+
+local newEnv = {}
+setmetatable(newEnv, {__index = _G})  
+
+-- 将当前环境变量改为一个新的空table
+setfenv(1, newEnv)
+print(a)   --print是_G中的,所以上面得设置元表           

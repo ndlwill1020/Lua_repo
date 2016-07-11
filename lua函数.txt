@@ -1,0 +1,139 @@
+-----------------------------------------------------------注意：
+一个函数若只有一个参数，并且此参数是一个字符串或table构造式，那么圆括号便可以省略掉
+print "Hello World"          --> print("Hello World")等价
+-- func是一个函数
+func{x=10, y=20}               -->func({x=10, y=20}) 等价
+
+
+当讨论一个函数名时，实际上是在讨论一个持有某函数的变量：
+-- 我们经常这样定义函数
+function foo(x) 
+return 2 * x 
+end
+-- 上述代码只是下面代码的一种简化书写形式
+foo = function (x) 
+return 2 * x 
+end
+
+-----------------------------------------------------------------------------函数写法：
+--如下是基本的函数的写法 local代表函数a是局部变量，接下来的function当然是函数的说明符了，a是函数的名称
+--括号中写参数，最后的end代表函数的结束 中间的函数体当然是我们要完成的函数功能了
+local function a()
+    print("function")
+end
+--等价于如下的写法
+--只要将一个函数存储在一个局部变量中，就得到了一个“局部函数”，也就是说这个函数只能在某个特定的作用域内才有效
+local a = function()
+    print("function")
+end
+--函数的调用
+a()
+
+
+
+---------------------------------------------------------函数存储在table中：
+
+local tab = {1}
+tab.func = function()
+    print("tab.func")
+end
+--或者可以简写为
+function tab.func()
+    print("tab.func")
+end
+tab.func()
+--还有一种写法，这里使用的是冒号，代表的是func有一个默认的参数self，这个参数的值就是tab
+function tab:func(a,b,c)
+    print(self[1]) -->1
+end
+--调用的时候使用冒号的形式来调用，代表的是默认传递一个值到这个函数中，这个值就是tab
+tab:func()
+
+
+
+
+-------------------------------------------------------------变长参数：
+for i = 1, select('#', ...) do
+    local arg = select(i, ...) -- 得到第i个参数
+    -- Do something else
+end
+
+function VarArguments(...)
+     for i, v in ipairs{...} do
+          print(v)
+     end
+end
+VarArguments(1, 2, 3)
+
+
+--Lua将函数的...参数放在一个叫arg的表中，除了参数以外，arg表中还有一个域n表示参数的个数。(Lua5.0+)
+function MyFunc(a, b, ...)
+     print(arg.n)
+end
+MyFunc(1, 2, 3, 4, 5)     -->3
+
+
+
+
+-------------------------------------------------------------cocos2d-lua:
+--下面是cocos中cclog函数的实现
+local cclog = function(...)
+    print(string.format(...))
+end
+
+
+---------------------------------------------------------------------------------------------多返回值:
+--Lua函数可以返回多个结果值，比如string.find，其返回匹配串“开始和结束的下标”(如果不存在匹配串返回nil)
+--接收多返回值的时候采用如下的方式进行接收
+local s, e = string.find("hello Lua users", "Lua")
+print(s, e)       --> 7  9
+
+
+function foo0() 
+end 
+local function foo2 () 
+	return 'a','b' 
+end
+--可以使用圆括号强制使调用返回一个值
+print((foo2()))      --> a
+print(foo2())   -->a b
+--foo2()不是作为表达式的最后一个参数，这个时候只返回第一个值
+print(foo2(), 1)         --> a   1
+print(foo2() .. "x")     --> ax
+a = {foo0(), foo2(), 4}  -- a[1] = nil, a[2] = 'a', a[3] = 4
+
+
+
+----------------------------------------------------------命名参数:
+实现这种思想的方法是通过表来实现
+local function setPostion(point)
+    print(point.x,point.y)
+end
+--正确的调用
+setPostion({x=1,y=2})
+
+
+----------------------------------------------------------只读表：
+通过代理的概念，可以很容易的实现只读的table
+function readOnly(t)
+     local proxy = {}
+
+     -- 创建元表
+     local mt = {
+          __index = t,
+          __newindex = function (t, k, v)
+               error("Attempt to update a read-only table", 2)
+          end
+     }
+
+     setmetatable(proxy, mt)
+     return proxy
+end
+
+local tbDemo = readOnly{1, 2, 3, 4, 5}
+
+print(table.maxn(tbDemo)) --0
+
+print(tbDemo[1])  --对tbDemo的访问就是调用它元表的元方法
+tbDemo[1] = 20
+

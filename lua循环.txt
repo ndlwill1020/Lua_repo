@@ -1,0 +1,27 @@
+循环 while，repeat，for
+while,for在执行循环体前测试循环条件
+repeat在执行完循环体后测试循环条件
+
+while..do
+end
+
+i = 0
+repeat
+	i = i + 1
+until (i * i >1000)
+
+for var = exp1,exp2,exp3 do
+end
+从exp1开始，到exp2为止，exp3为步长（默认为1，可省略）
+
+
+=====================================
+for-in
+可以遍历数组（table）
+local numbers = {1,22,333,4444}
+for i,v in ipairs(numbers) do
+	print(i..":"..v) --下标和值
+end
+
+
+跳转break，return

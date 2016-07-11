@@ -1,0 +1,97 @@
+================================================================================__index：
+当我们访问一个table中不存在的字段时，得到的结果是nil。但是这种状况很容易被改变；Lua是按照以下的步骤决定是返回nil还是其它值得：
+1.当访问一个table的字段时，如果table有这个字段，则直接返回对应的值；
+2.当table没有这个字段，则会促使解释器去查找一个叫__index的元方法，接下来就就会调用对应的元方法，返回元方法返回的值；
+3.如果没有这个元方法，那么就返回nil结果。
+
+Windows = {} -- 创建一个命名空间
+
+-- 创建默认值表
+Windows.default = {x = 0, y = 0, width = 100, height = 100, color = {r = 255, g = 255, b = 255}}
+
+Windows.mt = {} -- 创建元表
+
+-- 声明构造函数
+function Windows.new(o)
+     setmetatable(o, Windows.mt)
+     return o
+end
+
+-- 定义__index元方法    __index元方法不必一定是一个函数，它还可以是一个table  ,当它是一个函数时，Lua以table和不存在key作为参数来调用该函数###
+Windows.mt.__index = function (table, key)
+     return Windows.default[key]
+end
+或者   当它是一个table时，Lua就以相同的方式来重新访问这个table###
+Windows.mt.__index = Windows.default
+
+local win = Windows.new({x = 10, y = 10})
+print(win.x)               -- >10 访问自身已经拥有的值
+print(win.width)          -- >100 访问default表中的值
+print(win.color.r)          -- >255 访问default表中的值
+
+
+
+-------------------------------------------------深入理解：
+local t = {} --原来的table
+
+-- 保持对原table的一个引用
+local _t = t
+
+-- 创建代理，ｔ指向了新地址
+t = {}
+
+-- 创建元表
+local mt = {
+__index = function (t, k)
+print("access to element " .. tostring(k))
+return _t[k]  
+end,
+
+__newindex = function (t, k, v)
+print("update of element " .. tostring(k))
+_t[k] = v
+end
+}
+
+setmetatable(t, mt)
+
+t.x = 10 -- update of element x   实际存入了_t，元表做了重定义
+print(t.x) -- access to element x
+
+
+-------------------------------------------------设置默认值：
+function setDefault(tb, defaultValue)
+     local mt = {__index = function () return defaultValue end}
+     setmetatable(tb, mt)
+end
+
+local tb1 = {x = 10, y = 20}
+print(tb1.x, tb1.z)     --> 10 nil
+setDefault(tb1, 100) -->设置默认值
+print(tb1.x, tb1.z) --> 10 100 这里打印的就是默认值
+
+如果要让具有不同默认值得table都使用同一个元表，那么就需要将每个元表的默认值存放在table本身中，可以使用一个额外的字段来存储默认值
+local mt = {__index = function (t) return t.___ end}
+function setDefault(tb, defaultValue)
+     tb.___ = defaultValue       --额外的字段
+     setmetatable(tb, mt)
+end
+或者
+确保key在table中的唯一性，只需要创建一个新的table，并用它作为key即可，每一个新创建的table都是一个唯一的地址：
+local key = {} -- 唯一的key
+local mt = {__index = function (tb) return tb[key] end}
+
+function setDefault(tb, defaultValue)
+     tb[key] = defaultValue
+     setmetatable(tb, mt)
+end
+
+================================================================================__newindex：
+
+__newindex用于更新table中的数据，而__index用于查询table中的数据。当对一个table中不存在的索引赋值时，在Lua中是按照以下步骤进行的：
+1.Lua解释器先判断这个table是否有元表；
+2.如果有了元表，就查找元表中是否有__newindex元方法；如果没有元表，就直接添加这个索引，然后对应的赋值；
+3.如果有这个__newindex元方法，Lua解释器就执行它，而不是执行赋值；
+4.如果这个__newindex对应的不是一个函数，而是一个table时，Lua解释器就在这个table中执行赋值，而不是对原来的table。
+
+

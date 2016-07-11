@@ -1,0 +1,49 @@
+pairs与ipairs相同：
+函数pairs与ipairs类似，用于遍历一个table中的所有元素
+
+pairs与ipairs不同：
+pairs可以遍历表中所有的key，可以返回nil;
+ipairs则不能返回nil,只能返回数字0，如果遇到nil则退出。
+
+
+local tabFiles = {   
+[3] = "test2",   
+[6] = "test3",   
+[4] = "test1"  
+}   
+--当key=1时候value就是nil，所以直接跳出循环不输出任何值
+for k, v in ipairs(tabFiles) do  
+   print(k, v)   
+end
+--输出全部
+for k, v in pairs(tabFiles) do  
+    print(k, v)   
+end  
+
+
+
+local tt =   
+{   
+    [1] = "test3",   
+    [4] = "test4",   
+    [5] = "test5"  
+}   
+
+for i,v in pairs(tt) do     -- 输出 "test4" "test3" "test5"  
+    print( tt[i] )   
+end   
+for i,v in ipairs(tt) do    -- 输出 "test3" key=2时断开   
+    print( tt[i] )   
+end   
+
+
+  
+
+tbl = {"alpha", "beta", [3] = "uno", ["two"] = "dos"}   
+for i,v in ipairs(tbl) do    --输出前三个   
+    print( tbl[i] )   
+end   
+  
+for i,v in pairs(tbl) do    --全部输出   
+    print( tbl[i] )   
+end  

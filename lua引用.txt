@@ -1,0 +1,21 @@
+local t = {} 
+-- 保持对原table的一个引用
+local _t = t
+
+--相同的地址
+print(_t)
+print(t)
+
+--指向了一个新地址
+t = {}
+--不同的地址
+print(_t)
+print(t)
+
+
+输出：
+table: 054ED8B8
+table: 054ED8B8
+
+table: 054ED8B8
+table: 054ED750

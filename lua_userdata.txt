@@ -1,0 +1,8 @@
+userdata就是用户数据类型，指的是自己定义的类型，Cocos中导出给我们的接口都是Userdata
+
+
+你可以在C中定义struct，如何让Lua表示这个struct，Lua为此提供了一种基本的类型——userdata：
+
+函数lua_newuserdata会根据指定的大小分配一块内存，并将对应的userdata压入栈中，最后返回这个内存块的地址：
+void *lua_newuserdata(lua_State *L, size_t size);
+

@@ -1,0 +1,144 @@
+require用于使用模块，module用于创建模块，一个模块就是一个程序库
+
+require到底是如何加载的呢？
+1.先判断package.loaded这个table中有没有对应模块的信息；
+2.如果有，就直接返回对应的模块，不再进行第二次加载；
+3.如果没有，就加载，返回加载后的模块。
+
+
+
+
+---------------------------------------require：
+require “自己的模块名”
+这个调用会返回一个由模块函数组成的table，并且还会定义一个包含该table的全局变量
+
+
+---------------------------------------加载同一模块的不同版本：
+require用到了一个小的技巧：如果一个模块名中包含了连字符，require就会用连字符后的内容来创建luaopen_*函数名。比如：如果一个模块的名称为a-b，require就会认为它的open函数名为luaopen_b，并不是luaopen_a-b。现在好了，对于上面提出的不同版本进行测试的需求，就可以迎刃而解了。
+
+
+---------------------------------------写一个我们自己的模块：
+在Lua中创建一个模块最简单的方法是：创建一个table，并将所有需要导出的函数放入其中，最后返回这个table就可以了。相当于将导出的函数作为table的一个字段，在Lua中函数是第一类值，提供了天然的优势。来写一个我们自己的模块，代码如下：complex.lua
+
+
+--main.lua  require这个模块时，就会将这个模块名作为参数传给这个模块
+local moduleName = ...
+
+-- 打印参数
+for i = 1, select('#', ...) do
+     print(select(i, ...))
+end
+
+local M = {}    -- 局部的变量
+_G[moduleName] = M      -- 将这个局部变量最终赋值给模块名  可在main.lua    print(_G.["complex"])
+
+
+--require会将返回值存储到table package.loaded中；如果加载器没有返回值，require就会返回table package.loaded中的值
+--package.loaded这个table中保存了已经加载的所有模块
+--package.loaded[moduleName] = M  --消除return语句的一种方法是，将模块table直接赋值给package.loaded  这边写了，最后的return可省略
+
+complex = M     
+
+function M.new(r, i) return {r = r, i = i} end   --function
+
+-- 定义一个常量i
+M.i = M.new(0, 1)   --key = i,value = table
+
+function M.add(c1, c2)
+    return M.new(c1.r + c2.r, c1.i + c2.i)  --function
+end
+
+function M.sub(c1, c2)
+    return M.new(c1.r - c2.r, c1.i - c2.i)  --function
+end
+
+return complex  -- 返回模块的table  
+
+
+main.lua
+require "complex"  --打印complex
+
+c1 = complex.new(0, 1)
+c2 = complex.new(1, 2)
+
+ret = complex.add(c1, c2)
+print(ret.r, ret.i)
+
+
+
+
+
+
+
+
+----------------------------------------------------------------######
+local moduleName = ...
+
+local M = {}    -- 局部的变量
+_G[moduleName] = M     -- 将这个局部变量最终赋值给模块名
+
+package.loaded[moduleName] = M
+setfenv(1, M)
+
+这之后，当我们写下下面的代码：
+function add(c1, c2)
+    return new(c1.r + c2.r, c1.i + c2.i)
+end
+
+它其实是和下面的代码是等价的：
+function M.add(c1, c2)
+    return M.new(c1.r + c2.r, c1.i + c2.i)
+end
+这样就可以让我们在写自己的模块时，省去了前缀
+
+当我们调用setfenv之后，将一个空table M作为环境后，就无法访问前一个环境中全局变量了。这该如何是好？现在提供几种方法。 
+方法一： 使用元表，设置__index，模拟继承来实现
+local moduleName = ...
+
+local M = {}    -- 局部的变量
+_G[moduleName] = M     -- 将这个局部变量最终赋值给模块名
+
+package.loaded[moduleName] = M
+
+setmetatable(M, {__index = _G})
+setfenv(1, M)  --改变的当前lua文件的环境
+
+方法二：
+local moduleName = ...
+
+local M = {}    -- 局部的变量
+_G[moduleName] = M     -- 将这个局部变量最终赋值给模块名
+
+package.loaded[moduleName] = M
+
+local _G = _G -- 保存了全局的环境变量
+setfenv(1, M)
+
+
+方法三： 这种方法是最正规的方法，就是将那些需要用到的函数或模块声明为局部变量，看以下代码：
+local moduleName = ...
+
+local M = {}    -- 局部的变量
+_G[moduleName] = M     -- 将这个局部变量最终赋值给模块名
+
+package.loaded[moduleName] = M
+
+local sqrt = math.sqrt -- 在我们自己的模块中需要用到math.sqrt这个函数，所以就先保存下来
+local io = io -- 需要用到io库，也保存下来
+setfenv(1, M) -- 设置完成以后，就不能再使用_G table中的内容了
+
+
+---------------------------------------------module函数：Lua5.1有     lua5.3 去掉了module() 函数
+在定义一个模块时，前面的几句代码都是一样的，就分为以下几步：
+1.从require传入的参数中获取模块名；
+2.建立一个空table；
+3.在全局环境_G中添加模块名对应的字段，将空table赋值给这个字段；
+4.在已经加载table中设置该模块；
+5.设置环境变量。
+
+在每一个模块的定义之前都需要加上，是不是有点麻烦，在Lua5.1中提供了一个新函数module，它包括了以上这些步骤完成的功能。在编写一个模块时，可以直接用以下代码来取代前面的设置代码：
+module(...)
+就上面这一小句代码，它会创建一个新的table，并将其赋予给模块名对应的全局字段和loaded table，最后还会将这个table设为主程序块的环境。默认的情况下，module不提供外部的访问的，也就是说，你无法访问前一个环境了
+
+module(..., package.seeall)
+这句话的功能就好比之前的功能再加上了setmetatable(M, {__index = _G})。--拥有了前一个环境

@@ -1,0 +1,30 @@
+数字型for：
+--控制变量var会被自动的声明为for语句的局部变量，并且仅在循环体内可见
+for var = exp1, exp2, exp3 do
+     -- Do something
+end
+var从exp1变化到exp2，每次变化都以exp3作为步长进行递增，并执行一次do…end之间的代码。第三个表达式exp3是可选的，若不指定的话，Lua会将步长默认为1
+
+
+
+泛型for：
+泛型for循环通过一个迭代器函数来遍历所有值。在Lua的基础库中提供了ipairs，这是一个用于遍历数组的迭代器函数。从外观上看泛型for比较简单，但其实它是非常强大的。通过不同的迭代器，几乎可以遍历所有的东西。标准库提供了几种迭代器，包括用于迭代文件中每行的io.lines、迭代table元素的pairs、迭代数组元素的ipairs和迭代字符串中单词的string.gmatch等
+
+
+
+
+
+
+迭代器就是一种可以遍历一种集合中所有元素的机制：
+--使用闭包来完成整个任务
+function values(tb)
+     local i = 0
+     return function ()
+          i = i + 1
+          return tb[i]
+     end
+end
+local testTb = {10, 20, 30}
+for value in values(testTb) do
+     print(value)
+end

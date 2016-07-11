@@ -1,0 +1,71 @@
+--当一个函数内部嵌套另一个函数定义时，内部的函数体可以访问外部的函数的局部变量
+local function newCounter()
+    local i = 0
+    return function()     -- anonymous(匿名的) function
+        i = i+1
+        print(i)
+    end
+end
+--在newCounter的匿名函数内部i不是全局变量也不是局部变量，我们称作外部的局部变量或者upvalue
+--简单的说，闭包是一个函数以及它的upvalues。
+local c1 = newCounter()
+c1() -->1
+--虽然第二次调用的时候newCounter在第一次的时候已经返回，但是i的值却是上次的值
+c1() -->2
+
+
+function newCounter(i)
+     return function () -- 匿名函数
+          i = i + 1
+          return i
+     end
+end
+c1 = newCounter(10)
+print(c1())     --11
+print(c1())     --12
+
+
+
+
+--upvalue实际指的是变量而不是值，这些变量可以在内部函数之间共享
+function Fun1()
+     local iVal = 10          -- upvalue
+     function InnerFunc1()     -- 内嵌函数
+          print(iVal)          
+     end
+
+     function InnerFunc2()     -- 内嵌函数
+          iVal = iVal + 10
+     end
+
+     return InnerFunc1, InnerFunc2
+end
+-- 将函数赋值给变量，此时变量a绑定了函数InnerFunc1, b绑定了函数InnerFunc2
+local a, b = Fun1()
+-- 调用a
+a()          -->10
+-- 调用b
+b()          -->在b函数中修改了upvalue iVal
+-- 调用a打印修改后的upvalue
+a()          -->20
+
+
+
+闭包函数
+1.嵌套函数
+2.返回函数
+3.闭包表达式
+function getArea(type)
+  local returnFunction
+  
+  if type == "ndl" then
+    returnFunction = function(width,height) --匿名函数
+      local area =width *height
+      return area
+    end
+  end
+  
+  return returnFunction
+end
+local area= getArea("ndl")
+print(area(10,20))

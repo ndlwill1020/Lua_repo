@@ -1,0 +1,68 @@
+lua区分大小写,动态语言
+
+多行注释 --[[ ...... --]]
+
+在Lua中有8中基本类型，分别是：
+nil（空）类型	(变量赋值前默认nil，如果把变量赋值nil，lua垃圾收集器会删除变量，释放它所占的内存)
+boolean（布尔）类型	（true false）
+number（数字）类型   （包括整数和浮点数）
+string（字符串）类型	（"" 或 ''）
+userdata（自定义类型）
+function（函数）类型
+thread（线程）类型
+table（表）类型
+
+
+----------------------------常量：
+NUM = 100 --大写标识符
+
+----------------------------变量：
+local var = 0
+local var --nil  局部变量，作用范围是它所在的函数
+var --nil
+var = 0
+
+--------------------------------------type()
+local iValue = 10
+if type(iValue) == "number" then  --type返回值是string
+     print("It is a number")
+end
+
+--nil
+一个全局变量在第一次赋值前的默认值就是nil，将nil赋予一个全局变量等同于删除它
+
+--boolean
+Lua中只有false和nil是“假”的，而除此之外的都是“真”
+
+--变量
+i = 10     -->全局变量
+local i = 10     -->局部变量
+
+
+一个是main.lua，一个是other.lua，在main.lua中有一个全局变量一个局部变量，如下。
+--main.lua
+xiaotablog = "zaojiahua"
+local zaojiahua = "xiaotablog"
+--在other.lua中我们这样访问这俩个变量
+require "src/main"  --require是加载Lua模块用的
+print(xiaotablog) --zaojiahua
+print(zaojiahua)  --nil
+
+
+
+
+tostring()转换成字符串
+local flag = false
+tostring(flag) --"false"
+tostring({x=10}) --nil
+
+tonumber()转换成数字  他有两个参数，第二个参数是基数（表示数值的进制） 默认10进制
+tonumber("AF",16) --返回16进制数175
+
+
+--都是nil
+tonumber("123red")
+tonumber("red")
+tonumber(true)
+tonumber({x=10})
+

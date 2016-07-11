@@ -1,0 +1,49 @@
+当字符串是多行存在时，可以使用“[[]]”符号来界定一个多行字符串：
+local page = [[
+     <html xmlns="http://www.w3.org/1999/xhtml">
+          <head>
+               <title>xxxx</title>
+          </head>
+          <body>
+          </body>
+     </html>
+]]
+print(page)
+
+Lua中字符串是不可以修改的，你可以创建一个新的变量存放你要的字符串
+local a = "hello lua"
+local b = string.gsub(a,"hello","hi")
+print(a) --hello lua
+print(b) --hi lua
+
+当一个字符串使用算术操作符时，
+--string就会被转成数字。
+print("10" + 1)             --> 11
+--字符串拼接  如果其任意一个操作数是数字的话，Lua会将这个数字转换成一个字符串
+--字符串是不可变的值，连接操作符只会创建一个新字符串，而不会对其原操作数进行任何修改。
+print(10 .. 20)      --> 1020
+
+print(1+tonumber(2)) -->3
+print(tostring(100)) -->100
+
+
+==============================================================cocos2d-lua关东升
+lua下标从1开始
+string.len(s) --获取字符串长度
+
+string.sub(s,n,m) --截取第n个字符-第m个字符之间的字符串
+
+string.sub("1234",1,-2) --得到123 -2表示倒数第二个
+
+string.lower(str)
+string.upper(str)
+string.rep("Hello ",3) --Hello Hello Hello
+string.reverse("Hello") --olleH
+
+string.find(str, sub) --从str中查找sub字符串，有两个返回值
+local str = "Hello Lua"
+local i,j =string.find(str, "Hello") --i=1,j=5 i为找到开始的位置，j为结束的位置
+
+string.format("format",...)
+
+local s = string.format("%s %q","Hello","Lua") --Hello"Lua"
