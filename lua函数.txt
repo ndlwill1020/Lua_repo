@@ -73,6 +73,20 @@ end
 MyFunc(1, 2, 3, 4, 5)     -->3
 
 
+--...保存在arg中
+function args(a,b,...)
+  for key, var in pairs(arg) do
+    print(key.."="..var)
+  end
+  
+  print(a,b)
+  print("===========")
+end
+args(3) --a=3 b=nil arg={n=0}
+args(3,4) --a=3 b=4 arg={n=0}
+args(2,5,4,5) --a=2 b=5 arg={4,5,n=2}
+
+
 
 
 -------------------------------------------------------------cocos2d-lua:

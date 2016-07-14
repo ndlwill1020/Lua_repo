@@ -1,9 +1,9 @@
-lua(lua环境) luac(lua编译器)可执行文件所在目录A
+lua(lua运行环境) luac(lua编译器，将lua脚本编译成字节码)
 
 nano app.lua   lua文件中print("lua ndl")
 
-可执行文件所在目录A $ lua app.lua  执行lua文件，输出lua ndl
+ $ lua app.lua  执行lua源代码文件，输出lua ndl
 
-可执行文件所在目录A $ luac app.lua  编译lua文件，生成luac.out  
-可执行文件所在目录A $ lua luac.out  输出lua ndl
+ $ luac app.lua  编译lua文件，生成luac.out  
+ $ lua luac.out  执行lua字节码文件，输出lua ndl
 
