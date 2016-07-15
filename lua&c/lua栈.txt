@@ -60,3 +60,29 @@ lua_pushvalue函数会将指定索引上值得副本压入栈。
 lua_remove删除指定索引上的元素，并将该位置之上的所有元素下移以填补空缺。
 lua_insert会上移指定位置之上的所有元素以开辟一个槽空间，然后将栈顶元素移到该位置。
 lua_replace弹出栈顶的值，并将该值设置到指定索引上，但它不会移动任何东西，只是替换了指定索引的值。
+
+
+
+Lua_binding:通过c api实现lua与c之间相互调用
+eg：
+void size_to_luaval(lua_State *L,const Size& sz){
+	if(L == NULL){
+		return;
+	}
+	lua_newtable(L);--在栈中压入空table
+	lua_pushstring(L,"width");--压入字符串
+	lua_pushnumber(L,(lua_Number)sz.width);--压入数字
+	lua_rawset(L,-3);--等价于t[k] = v的操作，t位于-3的位置，不触发table的newindex事件，函数完成后自动弹出k，v
+	lua_pushstring(L,"height");
+	lua_pushnumber(L,(lua_Number)sz.height);
+	lua_rawset(L,-3);
+}
+
+t={}
+t.width=4;
+t.height=3
+
+lua_newtable(L);  //-1 {}
+lua_pushstring(L,"width"); //-1 "width",  -2 {}
+lua_pushnumber(L,(lua_Number)sz.width);//-1 4, -2 "width",-3 {}
+lua_rawset(L,-3);//-1 {"width" = 4}
