@@ -1,3 +1,8 @@
+当给函数传递的参数超过了定义的形参，那么多余的参数会被丢弃；如果传入的参数比形参少，那么缺少的形参的值默认为nil
+return fun()会把fun()所有的返回值返回，return (fun())只返回一个结果
+特殊函数unpack()，它接收一个数组作为参数，并从下标1开始返回所有元素
+print(unpack({10,20,30}))
+
 -----------------------------------------------------------注意：
 一个函数若只有一个参数，并且此参数是一个字符串或table构造式，那么圆括号便可以省略掉
 print "Hello World"          --> print("Hello World")等价
@@ -75,6 +80,7 @@ MyFunc(1, 2, 3, 4, 5)     -->3
 
 --...保存在arg中
 function args(a,b,...)
+--for key, var in pairs({...}) do
   for key, var in pairs(arg) do
     print(key.."="..var)
   end

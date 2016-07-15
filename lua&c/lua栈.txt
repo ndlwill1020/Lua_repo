@@ -1,0 +1,62 @@
+Lua和C语言通信的主要方法是一个无处不在的虚拟栈
+
+------------------------------------------------压入栈：
+void lua_pushnil(lua_State *L);
+void lua_pushboolean(lua_State *L, int bool);
+void lua_pushnumber(lua_State *L, lua_Number n);
+void lua_pushinteger(lua_State *L, lua_Integer n);
+void lua_pushlstring(lua_State *L, const char *s, size_t len);
+void lua_pushstring(lua_State *L, const char *s);
+
+lua_checkstack来检查栈中是否有足够的空间
+
+为了检查一个元素是否为特定的类型，API提供了一系列的函数lua_is*，其中*可以是任意Lua类型。这些函数有lua_isnumber、lua_isstring和lua_istable等，所有这些函数都有同样的原型：
+int lua_is*(lua_State *L, int index);
+实际上，lua_isnumber不会检查值是否为数字类型，而是检查值是否能转换为数字类型。
+lua_isstring也具有同样的行为，这样就出现一种状况，对于能转换成string的值，lua_isstring总是返回真
+lua_type函数，它会返回栈中元素的类型，每种类型都对应一个常亮，这些常亮定义在头文件lua.h中，它们是:
+
+#define LUA_TNONE		(-1)
+#define LUA_TNIL		0
+#define LUA_TBOOLEAN		1
+#define LUA_TLIGHTUSERDATA	2
+#define LUA_TNUMBER		3
+#define LUA_TSTRING		4
+#define LUA_TTABLE		5
+#define LUA_TFUNCTION		6
+#define LUA_TUSERDATA		7
+#define LUA_TTHREAD		8
+
+------------------------------------------------取值：
+我们一般使用lua_to*函数用于从栈中获取一个值，有以下常用的取值函数：
+lua_Number      lua_tonumber (lua_State *L, int idx);
+lua_Integer     lua_tointeger (lua_State *L, int idx);
+int             lua_toboolean (lua_State *L, int idx);
+const char     *lua_tolstring (lua_State *L, int idx, size_t *len);
+size_t          lua_objlen (lua_State *L, int idx);
+lua_CFunction   lua_tocfunction (lua_State *L, int idx);
+void	       *lua_touserdata (lua_State *L, int idx);
+lua_State      *lua_tothread (lua_State *L, int idx);
+const void     *lua_topointer (lua_State *L, int idx);
+
+
+当Lua调用的一个C函数返回时，Lua就会清空它的栈。这就有一条非常重要的规则：
+***不要在C函数之外使用在C函数内获得的指向Lua字符串的指针***
+
+
+
+------------------------------------------------其它栈操作：
+
+int   lua_gettop (lua_State *L); --返回栈中元素的个数，也可以说是栈顶元素的索引
+void  lua_settop (lua_State *L, int idx);
+void  lua_pushvalue (lua_State *L, int idx);
+void  lua_remove (lua_State *L, int idx);
+void  lua_insert (lua_State *L, int idx);
+void  lua_replace (lua_State *L, int idx);
+
+lua_settop将栈顶设置为一个指定的位置，即修改栈中元素的数量，如果之前的栈顶比新设置的更高，那么高出来的这些元素会被丢弃；反之，会向栈中压入nil来补足大小；比如，调用以下语句就能清空栈：
+lua_settop(L, 0);
+lua_pushvalue函数会将指定索引上值得副本压入栈。
+lua_remove删除指定索引上的元素，并将该位置之上的所有元素下移以填补空缺。
+lua_insert会上移指定位置之上的所有元素以开辟一个槽空间，然后将栈顶元素移到该位置。
+lua_replace弹出栈顶的值，并将该值设置到指定索引上，但它不会移动任何东西，只是替换了指定索引的值。

@@ -75,3 +75,28 @@ if (lua_isstring(L,-1)) {
 }
 lua_pop(L,1);
 lua_close(L);
+
+
+----------------------------
+// 加载配置文件
+int bRet = luaL_loadfile(L, pConfigFile);--加载一个lua文件
+// 运行配置文件
+bRet = lua_pcall(L, 0, 0, 0);--lua_pcall是在保护模式下运行Lua代码
+
+
+
+-----------------------------
+// 将需要设置的值设置到栈中
+lua_pushstring(L, "jdj");--将一个需要设置的新值放到栈中
+// 将这个值设置到table中
+lua_setfield(L, -2, "name");--将lua_push*到栈中的值，设置到table对应的key中
+
+--在表中完全创建一个新的table
+// 创建一个新的table，并压入栈
+lua_newtable(L);
+// 往table中设置值
+lua_pushstring(L, "www.baidu.com"); // 先将值压入栈
+lua_setfield(L, -2, "website"); // 将值设置到table中
+// 再设置一个值
+lua_pushstring(L, "Hello World");
+lua_setfield(L, -2, "description");

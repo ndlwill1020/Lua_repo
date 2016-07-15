@@ -36,8 +36,10 @@ print(tab2[a]) -->lua
 
 
 
+
 local t = {"ndl","cc"} --数组 lua第一个元素的索引值是1
 print(t[1])   --表示输出索引为1（下标为1，第一个元素）的值，即ndl
+t[1] = nil --删除一个table项
 
 local num = {1,2,3,4,5}  --数组
 --其实num的初始化等价于如下
