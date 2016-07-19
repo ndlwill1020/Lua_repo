@@ -2,6 +2,9 @@ app.lua
 sayHelo()
 print(getString("ndl"))
 
+a.lua
+print(foo(99))
+
 
 //lua调用c方法
 //无参：
@@ -20,22 +23,34 @@ int main (int argc, char **argv) {
 }
 
 
-//有参：
+//有参： 
 int getstring(lua_State *L){
 	const char* name = luaL_checkstring(L,1);
 	char buf[100];
 	memset(buf,0,100);
 
 	sprintf(buf,"Hello %s",name);
-	lua_pushstring(L,buf);
+	lua_pushstring(L,buf);//###
 	return 1;
+}
+
+int foo(lua_State *L)
+{
+  int n = lua_tonumber(L, 1);//取得传入的参数
+  lua_pushnumber(L, n + 1);//将返回值压入lua环境
+  return 1;//表示有多少个返回值被压入lua环境
 }
 
 int main (int argc, char **argv) {
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
-	lua_register(L,"getString",getString);
+	lua_register(L,"getString",getString);//注册进lua环境
+	--luaL_dofile(L, "a.lua");
 	dofile(L,"app.lua");
 	lua_close(L);
 	return 0;
 }
+
+
+===============================================
+

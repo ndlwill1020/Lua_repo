@@ -1,0 +1,29 @@
+Mac：
+cd 项目路径
+
+cocos luacompile -h //查看帮助
+
+//需要写全路径 
+-s 是lua脚本所在路径
+-d 是编译好的lua脚本存放路径（编译后的lua脚本会变成.luac不用担心原来的lua脚本文件被覆盖）
+-e 表示对脚本进行加密
+-k 是脚本加密的KEY
+-b 是脚本加密的签名
+cocos luacompile -s /Users/macuser/develop/cocos2dx3.2projects/LuaBindingsDemo/src/ -d /Users/macuser/develop/cocos2dx3.2projects/LuaBindingsDemo/out/ -e -k key_ndl -b sign_ndl
+
+
+在对脚本编译和加密的工作完成后，我们还需要在AppDelegate中，设置下脚本解密的KEY和Sign
+ScriptEngineManager::getInstance()->setScriptEngine(engine);
+LuaStack* stack = engine->getLuaStack();
+stack->setXXTEAKeyAndSign("key_ndl", strlen("key_ndl"), "sign_ndl", strlen("sign_ndl"));
+
+if (engine->executeScriptFile("out/main.luac")) {
+        return false;
+}
+
+不要忘，移除没有加密的*.lua文件,只包含编译之后的luac就够了
+
+###
+由于iphone6和5s的64位架构上是不支持luajit编译的，所以只能使用lua脚本运行，不能用luajit编译后的字节码。
+所以需要在上边命令后加一行  --disable-compile(cocos2dx3.3+才有这个参数,低于3.3版本的可用高版本的cocos命令来加密)  以禁止cocos工具将lua进行编译
+cocos luacompile -s /Users/macuser/develop/cocos2dx3.2projects/LuaBindingsDemo/src/ -d /Users/macuser/develop/cocos2dx3.2projects/LuaBindingsDemo/out/ -e -k key_ndl -b sign_ndl --disable-compile

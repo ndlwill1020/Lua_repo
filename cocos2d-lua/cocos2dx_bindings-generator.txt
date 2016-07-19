@@ -1,0 +1,89 @@
+1、写自己的C++类，按照cocos2d-x的规矩，继承cocos2d::Ref类，以便使用cocos2d-x的内存回收机制。当然不这么干也行，但是不推荐，不然在Lua环境下对象的释放很麻烦。
+2、编写一个.ini文件，让bindings-generator可以根据这个配置文件知道C++类该怎么暴露出来
+3、修改bindings-generator脚本，让它去读取这个.ini文件
+4、执行bindings-generator脚本，生成桥接C++类方法
+5、用Xcode将自定义的C++类和生成的桥接文件加入工程，不然编译不到
+6、修改AppDelegate.cpp，执行桥接方法，自定义的C++类就注册进Lua环境里了
+
+
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+1.自定义的C++类。保存在frameworks/runtime-src/Classes/目录下：
+frameworks/runtime-src/Classes/MyClass.h
+
+#include "cocos2d.h"
+using namespace cocos2d;
+
+class MyClass : public Ref
+{
+public:
+  MyClass()   {};
+  ~MyClass()  {};
+  bool init() { return true; };
+  CREATE_FUNC(MyClass);
+
+  int foo(int i);
+};
+
+
+#include "MyClass.h"
+int MyClass::foo(int i)
+{
+  return i + 100;
+}
+
+2.然后编写.ini文件。在frameworks/cocos2d-x/tools/tolua/目录下能看到genbindings.py脚本和一大堆.ini文件，这些就是bindings-generator的实际执行环境了。随便找一个内容比较少的.ini文件，复制一份，重新命名为MyClass.ini
+
+frameworks/cocos2d-x/tools/tolua/MyClass.ini
+
+[MyClass]
+prefix           = MyClass
+target_namespace = my
+headers          = %(cocosdir)s/../runtime-src/Classes/MyClass.h
+classes          = MyClass
+指定MyClass.h文件的位置，指定要暴露出来的类，指定注册进Lua环境的模块名
+
+3.然后修改genbindings.py文件，将MyClass.ini文件加进去：
+frameworks/cocos2d-x/tools/tolua/genbindings.py
+cmd_args = {'cocos2dx.ini' : ('cocos2d-x', 'lua_cocos2dx_auto'), \
+            'MyClass.ini' : ('MyClass', 'lua_MyClass_auto'), \
+            ...
+
+4.python genbindings.py
+
+成功执行genbindings.py脚本后，会在frameworks/cocos2d-x/cocos/scripting/lua-bindings/auto/目录下看到新生成的文件
+
+在frameworks/cocos2d-x/cocos/scripting/lua-bindings/auto/目录下观察一下生成的C++桥接文件lua_MyClass_auto.cpp，里面的注册函数名字为register_all_MyClass()，这就是将MyClass类注册进Lua环境的关键函数
+
+编辑frameworks/runtime-src/Classes/AppDelegate.cpp文件，首先在文件头加入对lua_MyClass_auto.hpp文件的引用：
+然后在正确的代码位置加入对register_all_MyClass函数的调用：
+在执行编译前，将新加入的这几个C++文件都加入到Xcode工程中
+
+这其中还有一个小坑，由于lua_MyClass_auto.cpp文件要引用MyClass.h文件，而这俩文件分属于不同的子项目
+需要手工修改一下cocos2d_lua_bindings.xcodeproj子项目的User Header Search Paths配置
+
+
+修改main.lua文件中，尝试调用一下MyClass类：
+local test = my.MyClass:create()
+print("lua bind: " .. test:foo(99))
+
+然后执行程序,崩溃
+原因是executeScriptFile函数执行时，对当前Lua环境中的栈进行了清理，当register_all_MyClass函数被调用时，Lua栈是全空的状态，函数内部执行到tolua_module函数调用时就崩溃了：
+
+AppDelegate.cpp
+lua_State *L = stack->getLuaState();
+lua_getglobal(L, "_G");
+register_all_MyClass(L);
+lua_settop(L, 0);
+
+配置完成后iOS的部分是可以正常运行的，但是这个时候编译android是不通过的，因为AppDelegate.cpp里面调用的register_all_MyClass(L)方法在android不存在，android的项目里并没有配置去编译对应的MyClass.cpp文件和后续生成的lua_MyClass_auto.cpp，所以需要在android端配置Android.mk文件，让项目编译时去编译这两个C++文件才行。
+
+1、首先配置JNI下面的Android.mk文件，让JNI部分编译时去编译MyClass.cpp：
+编辑frameworks/runtime-src/proj.android/jni/Android.mk，在LOCAL_SRC_FILES参数的后面添加:
+../../Classes/MyClass.cpp
+MyClass.cpp去#include "MyClass.h"文件时找不到MyClass.h文件所在位置，那就需要修改LOCAL_C_INCLUDES配置，将MyClass.h所在的目录加入到头文件搜索路径中。如果MyClass.h文件本身就放在frameworks/runtime-src/Classes目录下的话就不用再单独设置了
+
+2、然后配置lua-bindings下面的Android.mk文件，让lua-bindings部分编译时去编译lua_MyClass_auto.cpp：
+
+编辑frameworks/cocos2d-x/cocos/scripting/lua-bindings/Android.mk，在LOCAL_SRC_FILES配置里添加lua_MyClass_auto.cpp：
+
+因为lua_MyClass_auto.cpp里引用到了MyClass.h，所以还需要配置LOCAL_C_INCLUDES，使得lua_MyClass_auto.cpp能正常的找到MyClass.h:

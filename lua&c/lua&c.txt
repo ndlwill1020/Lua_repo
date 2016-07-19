@@ -7,5 +7,14 @@ extern "C" {
 }
 
 1.头文件lua.h定义了Lua提供的基础函数，包括创建Lua环境、调用Lua函数、读写Lua环境中全局变量，以及注册供Lua调用的新函数等等；
-2.头文件lauxlib.h定义了辅助库提供的辅助函数，它的所有定义都以LuaL_开头。辅助库是一个使用lua.h中API编写出的一个较高的抽象层。Lua的所有标准库编写都用到了辅助库；辅助库主要用来解决实际的问题。辅助库并没有直接访问Lua的内部，它都是用官方的基础API来完成所有工作的；
+
+2.头文件lauxlib.h定义了辅助库提供的辅助函数，它的所有定义都以LuaL_开头。辅助库是一个使用lua.h中API编写出的一个较高的抽象层###。Lua的所有标准库编写都用到了辅助库；辅助库主要用来解决实际的问题。辅助库并没有直接访问Lua的内部，它都是用官方的基础API来完成所有工作的###
+
 3.头文件lualib.h定义了打开标准库的函数。Lua库中没有定义任何全局变量。它将所有的状态都保存在动态结构lua_State中，所有的C API都要求传入一个指向该结构的指针。luaL_newstate函数用于创建一个新环境或状态。当luaL_newstate创建一个新的环境时，新的环境中并没有包含预定义的函数（eg.print）。为了使Lua保持灵活，小巧，所有的标准库都被组织到了不同的包中。当我们需要使用哪个标准库时，就可以调用lualib.h中定义的函数来打开对应的标准库；而辅助函数luaL_openlibs则可以打开所有的标准库。
+
+
+//lua.h
+lua_newstate(lua_Alloc f, void *ud)
+
+//lauxlib.h
+lua_State *L = luaL_newstate();//它会调用lua_newstate(lua_Alloc f, void *ud)

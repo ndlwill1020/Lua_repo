@@ -1,0 +1,255 @@
+cocos2dx-3.2
+
+--cocos2d-x为我们提供了一个 class(classname, super) 这个函数。它可以让我们很方便的定义一个类，或者继承cocos2d-x的某个类
+--创建基类
+Hero = class("Hero")
+function Hero:ctor()
+	self.name = "cc"
+	self.age = 18
+end
+
+hero = Hero.new() 
+print(hero.name)
+
+--继承
+GameScene.lua
+local winSize = cc.Director:getInstance():getVisibleSize()
+local GameScene = class("GameScene", function()
+	return cc.Scene:create()
+end)
+
+function GameScene.create()
+	local scene = GameScene.new()--会调用ctor()
+	scene:addChild(scene:createLayer())
+	return scene
+end
+
+function GameScene:createLayer()
+	local layer = cc.Layer:create()
+	layer:setPosition(cc.p(100,100))
+
+	return layer
+end
+
+--构造函数  类的成员变量，可在ctor()中进行声明
+function GameScene:ctor()
+	local function onNodeEvent(event)
+		if event == "enterTransitionFinish" then
+			self:onEnterTransitionFinish()
+		end
+	end
+end
+
+--场景进入并且过渡动画完成时触发
+function GameScene:onEnterTransitionFinish()
+
+end
+
+return GameScene
+
+
+local scene = require("GameScene") --返回值是table类型全局变量
+local gameScene = scene.create()
+
+-----------------------------------------------------------
+local winSize = cc.Director:getInstance():getWinSize()
+ 
+ 
+-- 继承Layer类
+MenuLayer = class("MenuLayer", function()
+    return cc.Layer:create()
+end)
+ 
+ 
+-- 初始化函数
+function MenuLayer:ctor()
+    self.name = "hello"         -- 成员变量
+    self.size = cc.size(0, 0)   -- 成员变量
+end
+ 
+ 
+-- 创建包含GameLayer的场景
+function MenuLayer:createScene()
+    local scene = cc.Scene:create()
+    local layer = MenuLayer:create()
+    scene:addChild(layer)
+    return scene
+end
+ 
+ 
+-- 创建GameLayer层
+function MenuLayer:create()
+    local layer = MenuLayer.new()  -- new()
+    layer:init()                   -- init()
+    return layer
+end
+ 
+ 
+-- 初始化
+function MenuLayer:init()
+    self:ShowUI()       -- 添加界面元素(Sprite、Label等)
+    self:addBtn()       -- 添加菜单按钮
+    self:addTouches()   -- 添加多点触摸
+end
+
+============================================================================schedule&event
+function GameScene:createLayer()
+	local layer = cc.Layer:create()
+
+	local function update(dt)
+
+	end
+
+	layer:scheduleUpdateWithPriorityLua(update, 0) --不推荐
+
+	function onNodeEvent(tag)
+		
+		--layer:unscheduleUpdate()
+	end
+	layer:registerScriptHandler(onNodeEvent)
+
+	local item = cc.MenuItemFont:create("start")
+	local function menuItemCB(sender)
+
+	end
+	item:registerScriptTapHandler(menuItemCB)
+
+	local menu = cc.Menu:create(item)
+	layer:addChild(menu)
+
+	return layer
+end
+
+-------------------------------------
+local scheduler,myupdate
+local timer = 0
+local function update(dt)
+	timer = timer + dt
+	if timer >= 3 then
+		schedluer:unscheduleScriptEntry(myupdate)
+	end
+end
+scheduler = cc.Director:getInstance():getScheduler()
+myupdate = scheduler:scheduleScriptFunc(update, 1.0f, false)--刷新函数 刷新间隔 是否执行一次
+============================================================================枚举
+cc.ResolutionPolicy.FIXED_WIDTH
+cc.SCROLLVIEW_DIRECTION_VERTICAL
+cc.TABLEVIEW_FILL_TOPDOWN
+cc.PROGRESS_TIMER_TYPE_BAR
+
+
+============================================================================生命周期
+replaceScene 会释放场景对象调用cleanup（比pushScene多这个调用）
+
+============================================================================Action
+cc.Sequence:create()
+cc.Animate:cretae()
+cc.Animation:create()
+
+--非线性或匀速速度运动
+cc.EaseIn:create(action,3) --3倍速度由慢到快
+
+--hander:回调函数  value:传递给回调函数的参数，必须为table
+cc.CallFunc:create(hander, value)
+
+local function CB()
+end
+local cf = cc.CallFunc:create(CB)
+
+local function CB_N(pSender)
+end
+local cf = cc.CallFunc:create(CB_N)
+
+local function CB_ND(pSender,table)
+end
+local cf = cc.CallFunc:create(CB_ND,{255,255,255,255})
+
+
+
+============================================================================事件
+local function touchBegin(touch, event)
+	local rect = cc.rect(0,0,w,h)
+	if cc.rectContainsPoint(rect,locationInNode) then
+		return true
+	end
+	return false
+end
+
+local function touchMoved(touch, event)
+	
+end
+
+local listener = cc.EventListenerTouchOneByOne:create()
+listener:registerScriptHandler(touchBegin, cc.Handler.EVENT_TOUCH_BEGIN)
+--local eventDispatcher = pLayer:getEventDispatcher()
+local eventDispatcher = cc.Director:getInstance():getEventDispatcher()
+eventDispatcher:addEventListenerWithSceneGraphPriority(listener, pLayer)
+
+
+--加速计
+layer:setAccelerometerEnabled(true)
+local function accelerometerListener(event,x,y,z,timestamp)
+
+end
+============================================================================数学
+getPosition() --返回2个值，不是table
+
+--返回table
+getAnchorPoint()
+getContentSize()
+getBoundingBox()
+
+cc.p(x,y)
+cc.size(w,h)
+cc.rect(x,y,w,h)
+
+--返回值float
+cc.pDot(p1,p2)--点积
+cc.pCross(p1,p2)--叉积
+cc.pProject(p1,p2)--投影 后在前上的投影
+cc.pGetLength(p)
+cc.pGetDistance(p1,p2)
+cc.pGetAngle(p1,p2)
+
+--返回值table
+cc.p(x,y)
+cc.pAdd(p1,p2)
+cc.pSub(p1,p2)
+cc.pMidpoint(p1,p2)
+cc.pNormalize(p1)
+
+--矩形
+cc.rectGetMinX(rect)
+cc.rectGetMidX(rect)
+cc.rectGetMaxX(rect)
+
+cc.rectEqualToRect(rect1,rect2)
+cc.rectContainsPoint(rect,point)
+cc.rectIntersectsRect(rect1,rect2)
+============================================================================颜色
+cc.c3b(byte,byte,byte)
+cc.c4b(byte,byte,byte,byte)
+cc.c4f(float,float,float,float)
+============================================================================音频
+require "AudioEngine"
+AudioEngine.preloadMusic("x.mp3")
+
+AudioEngine.playMusic("x.mp3", true)
+============================================================================粒子
+local particleSystem = cc.ParticleSystemQuad:create("snow.plist")
+============================================================================瓦片
+local _tileMap
+
+function GameScene:createLayer()
+	local layer = cc.Layer:create()
+	_tileMap = cc.TMXTiledMap::create("map.tmx")
+	layer:addChild(_tileMap)
+
+	local group = _tileMap:getObjectGroup("objects")
+	local playerPoint = group:getObject("player") --返回字典
+
+	local playerX = playerPoint["x"]
+	local playerY = playerPoint["y"]
+216
+
+end
