@@ -1,5 +1,7 @@
 cocos2dx-3.2
 
+cocos luacompile 工具能编译lua源代码文件为luac文件，lua编译不是编译成为c++的二进制机器码，而是字节码（bytecode）
+
 --cocos2d-x为我们提供了一个 class(classname, super) 这个函数。它可以让我们很方便的定义一个类，或者继承cocos2d-x的某个类
 --创建基类
 Hero = class("Hero")
@@ -238,6 +240,27 @@ AudioEngine.playMusic("x.mp3", true)
 ============================================================================粒子
 local particleSystem = cc.ParticleSystemQuad:create("snow.plist")
 ============================================================================瓦片
+瓦片坐标原点在左上角
+gid == 0表示瓦片不存在
+
+TMXTiledMap:
+getMapSize()
+getTileSize()
+
+TMXLayer:
+getLayerName()
+getLayerSize()
+getMapTileSize()
+getPositionAt(tileCoordinate)//通过瓦片坐标获得像素坐标
+getTileGIDAt(tileCoordinate)//通过瓦片坐标获得gid
+
+TMXObjectGroup:
+getProperty(propertyName)
+getObject(objectName)
+getProperties()
+getObjects()
+
+
 local _tileMap
 
 function GameScene:createLayer()
@@ -246,10 +269,95 @@ function GameScene:createLayer()
 	layer:addChild(_tileMap)
 
 	local group = _tileMap:getObjectGroup("objects")
+	local bg = _tileMap:getLayer("bg")
 	local playerPoint = group:getObject("player") --返回字典
 
 	local playerX = playerPoint["x"]
 	local playerY = playerPoint["y"]
-216
+
 
 end
+============================================================================FileUtils
+local fu = cc.FileUtils:getInstance()
+fu:fullPathForFilename()
+fu:isFileExist()
+fu:getWritablePath()
+fu:getStringFromFile(fullPathForFilename)
+
+fu:getValueMapFromFile(fullPathForFilename)
+fu:getValueVectorFromFile(fullPathForFilename)
+
+table.getn(values) --获取table values的长度
+============================================================================UserDefault
+cc.UserDefault:getInstance():setBoolForKey("isBool", false)
+============================================================================Http
+XMLHttpRequest:函数和属性
+open() 创建新的请求:5个参数可以使用＃＃＃
+request-type:请求类型GET POST
+url:请求连接的url
+asynch:异步为true,可选参数，默认true
+username:可选
+password:可选
+
+
+send() 发送请求＃＃＃
+abort() 退出请求
+readyState 4表示准备就绪，请求的就绪状态
+status	200表示成功，请求状态码
+responseText	服务器返回的请求响应文本
+onreadystatechange  设置回调函数＃＃＃
+
+--查询
+local function onMenuReadCB(pSender)
+	local date = string.format("email = %s&type = %s&action=%s","a@126.com","JSON","query")
+	local url = BASE_URL.."?"..data
+	local request = cc.XMLHttpRequest:new()
+	request.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+	request:open("GET",url)
+
+	local function onReadyStateChange()
+		if request.readyState == 4 and request.status == 200 then
+			local response  = request.responseText
+		end
+	end
+	request:registerScriptHandler(onReadyStateChange)
+	request:send()
+end
+--插入
+local date = string.format("email = %s&type = %s&action=%s&date = %s&content = %s","a@126.com","JSON","add","2016-3-3","ndl insert")
+local request = cc.XMLHttpRequest:new()
+request.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+request:open("POST",BASE_URL)
+local function onReadyStateChange()
+	if request.readyState == 4 and request.status == 200 then
+		local response  = request.responseText
+	end
+end
+request:registerScriptHandler(onReadyStateChange)
+request:send()
+
+--删除
+local date = string.format("email = %s&type = %s&action=%s&id = %s","a@126.com","JSON","remove",selectedRowId)
+local request = cc.XMLHttpRequest:new()
+request.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+request:open("POST",BASE_URL)
+local function onReadyStateChange()
+	if request.readyState == 4 and request.status == 200 then
+		local response  = request.responseText
+	end
+end
+request:registerScriptHandler(onReadyStateChange)
+request:send()
+
+--更新
+local date = string.format("email = %s&type = %s&action=%s&date = %s&content = %s&id = %s","a@126.com","JSON","modify","2016-3-3","ndl modify",selectedRowId)
+local request = cc.XMLHttpRequest:new()
+request.responseType = cc.XMLHTTPREQUEST_RESPONSE_JSON
+request:open("POST",BASE_URL)
+local function onReadyStateChange()
+	if request.readyState == 4 and request.status == 200 then
+		local response  = request.responseText
+	end
+end
+request:registerScriptHandler(onReadyStateChange)
+request:send()
