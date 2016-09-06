@@ -1,0 +1,85 @@
+local tblTest1 =
+{
+    1,
+    2,
+    3
+}
+
+print(table.getn(tblTest1)) --3
+----------------------------------------------
+local tblTest2 =
+{
+    1,
+    a = 2,
+    3,
+}
+
+print(table.getn(tblTest2)) --2 字典类型的不作为外表的长度
+----------------------------------------------
+local tblTest3 =
+{
+    1,
+    {a = 2},
+    3,
+}
+
+print(table.getn(tblTest3)) --3  表嵌套表，嵌套表也是元素
+--------------------------------------------------------------------------------------------
+local tblTest4 =
+{
+    1,
+    nil,
+}
+
+print(table.getn(tblTest4)) --1
+----------------------------------------------
+local tblTest5 =
+{
+    1,
+    nil,
+    2,
+}
+
+print(table.getn(tblTest5)) --3
+----------------------------------------------
+local tblTest5 =
+{
+    1,
+    nil,
+    2,
+	nil,
+}
+
+print(table.getn(tblTest5)) --1
+----------------------------------------------
+local tblTest5 =
+{
+    1,
+    nil,
+    2,
+	nil,
+	3,
+	nil,
+}
+
+print(table.getn(tblTest5)) --3
+----------------------------------------------
+local tblTest5 =
+{
+    1,
+    nil,
+    2,
+	nil,
+	3,
+	nil,
+	4,
+	nil
+}
+
+print(table.getn(tblTest5)) --1
+
+你可能认为你发现的是个规律。但是，你千万不要认为这是个规律。因为这是错误的######
+
+在table中不要使用nil
+如果非要使用nil，必须用table.setn()函数去设置这个table表的长度。注意：新版本的lua已经不支持setn了。
+如果一个元素要删除，直接remove，不要用nil去代替。

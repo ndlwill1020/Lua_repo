@@ -1,0 +1,16 @@
+local t = {1,2,3,3,5,3,6} 
+for i,v in ipairs(t) do 
+	if v == 3 then 
+		table.remove(t,i) 
+	end 
+end 
+-- 错误，第四个 3 没有被移除，ipairs 内部会维护一个变量记录遍历的位置，remove 掉第三个数字 3 之后，ipairs 下一个返回的值是 5 而不是 3 
+
+
+local t = {1,2,3,3,5,3,6} 
+for i=#t, 1, -1 do 
+	if t[i] == 3 then 
+		table.remove(t,i) 
+	end 
+end 
+-- 正确，从后往前遍历 
