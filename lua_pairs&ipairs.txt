@@ -3,7 +3,7 @@ pairs与ipairs相同：
 
 pairs与ipairs不同：
 pairs可以遍历表中所有的key，可以返回nil;
-ipairs则不能返回nil,只能返回数字0，如果遇到nil则退出。
+ipairs则不能返回nil,只能返回数字0。   从下标1开始输出,如果遇到nil则退出
 
 
 local tabFiles = {   
