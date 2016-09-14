@@ -1,4 +1,4 @@
-lua(lua运行环境) luac(lua编译器，将lua脚本编译成字节码)
+lua(lua运行环境，解释器) luac(lua编译器，将lua脚本编译成字节码)
 
 nano app.lua   lua文件中print("lua ndl")
 
