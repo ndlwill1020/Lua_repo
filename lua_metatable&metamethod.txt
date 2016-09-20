@@ -1,3 +1,6 @@
+local firstTable = setmetatable(table, mt)  //setmetatable的返回值是第一个参数table
+
+
 lua元表与元方法
 
 在C++中，两个类是无法直接相加的，如果你重载了“+”符号，就可以进行类的加法运算。
