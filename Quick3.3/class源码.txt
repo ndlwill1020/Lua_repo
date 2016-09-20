@@ -1,0 +1,20 @@
+在没有继承的情况下定义一个类ClassA：
+--ClassA.lua
+local ClassA = class("ClassA")
+ClassA.field1 = "this is field1"
+return ClassA
+
+--main.lua
+local ClassA = require("ClassA")
+local InstanceA = ClassA.new()
+
+InstanceA的metatable为ClassA, 而且ClassA.__index = ClassA, 因此，对于InstanceA找不到的属性， 将在ClassA里进行查找
+ClassA里的属性比如field1, 是相当于类变量的概念，所有实例都公用该属性，并非各自维护该字段的拷贝
+
+
+-----------------------------------------------------
+定义ClassB, 从ClassA 进行继承
+--ClassB.lua
+local ClassB = class("ClassB", require("ClassA"))
+ 
+return ClassB

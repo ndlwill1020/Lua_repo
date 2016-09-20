@@ -1,0 +1,91 @@
+创建一个类
+
+~~~ lua
+
+-- 定义名为 Shape 的基础类
+local Shape = class("Shape")
+
+-- ctor() 是类的构造函数，在调用 Shape.new() 创建 Shape 对象实例时会自动执行
+function Shape:ctor(shapeName)
+    self.shapeName = shapeName
+    printf("Shape:ctor(%s)", self.shapeName)
+end
+
+-- 为 Shape 定义个名为 draw() 的方法
+function Shape:draw()
+    printf("draw %s", self.shapeName)
+end
+
+--
+
+-- Circle 是 Shape 的继承类
+local Circle = class("Circle", Shape)
+
+function Circle:ctor()
+    -- 如果继承类覆盖了 ctor() 构造函数，那么必须手动调用父类构造函数
+    -- 类名.super 可以访问指定类的父类
+    Circle.super.ctor(self, "circle")
+    self.radius = 100
+end
+
+function Circle:setRadius(radius)
+    self.radius = radius
+end
+
+-- 覆盖父类的同名方法
+function Circle:draw()
+    printf("draw %s, raidus = %0.2f", self.shapeName, self.raidus)
+end
+
+--
+
+local Rectangle = class("Rectangle", Shape)
+
+function Rectangle:ctor()
+    Rectangle.super.ctor(self, "rectangle")
+end
+
+--
+
+local circle = Circle.new()             -- 输出: Shape:ctor(circle)
+circle:setRaidus(200)
+circle:draw()                           -- 输出: draw circle, radius = 200.00
+
+local rectangle = Rectangle.new()       -- 输出: Shape:ctor(rectangle)
+rectangle:draw()                        -- 输出: draw rectangle
+
+
+---------------------------------------------------------------------------------
+-- 从 cc.Node 对象派生 Toolbar 类，该类具有 cc.Node 的所有属性和行为
+local Toolbar = class("Toolbar", function()
+    return display.newNode() -- 返回一个 cc.Node 对象
+end)
+
+-- 构造函数
+function Toolbar:ctor()
+    self.buttons = {} -- 用一个 table 来记录所有的按钮
+end
+
+-- 添加一个按钮，并且自动设置按钮位置
+function Toolbar:addButton(button)
+    -- 将按钮对象加入 table
+    self.buttons[#self.buttons + 1] = button
+
+    -- 添加按钮对象到 cc.Node 中，以便显示该按钮
+    -- 因为 Toolbar 是从 cc.Node 继承的，所以可以使用 addChild() 方法
+    self:addChild(button)
+
+    -- 按照按钮数量，调整所有按钮的位置
+    local x = 0
+    for _, button in ipairs(self.buttons) do
+        button:setPosition(x, 0)
+        -- 依次排列按钮，每个按钮之间间隔 10 点
+        x = x + button:getContentSize().width + 10
+    end
+end
+
+~~~
+
+class() 的这种用法让我们可以在 C++ 对象基础上任意扩展行为。
+
+既然是继承，自然就可以覆盖 C++ 对象的方法：

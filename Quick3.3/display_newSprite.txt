@@ -1,0 +1,18 @@
+display.newSprite() 有三种方式创建显示对象：
+
+-   从图片文件创建
+-   从缓存的图像帧创建
+-   从 SpriteFrame 对象创建
+
+
+-- 从图片文件创建显示对象
+local sprite1 = display.newSprite("hello1.png")
+
+-- 从缓存的图像帧创建显示对象
+-- 图像帧的名字就是图片文件名，但为了和图片文件名区分，所以此处需要在文件名前添加 “#” 字符
+-- 添加 “#” 的规则适用于所有需要区分图像和图像帧的地方
+local sprite2 = display.newSprite("#frame0001.png")
+
+-- 从 SpriteFrame 对象创建
+local frame = display.newFrame("frame0002.png")
+local sprite3 = display.newSprite(frame)

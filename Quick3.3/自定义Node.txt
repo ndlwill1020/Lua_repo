@@ -1,0 +1,81 @@
+从 Node（或继承类）创建自己的 Lua 类，那么可以直接覆盖这几个方法：
+
+require("framework.init")
+
+-- 定义一个自己的 cc.Node 继承类
+local MyNode = class("MyNode", function(sceneName)
+    local node = display.newNode()
+    node.sceneName = sceneName
+    return node
+end)
+
+function MyNode:onEnter()
+    printf("node in scene [%s] method %s",
+        self.sceneName,
+        "onEnter")
+end
+
+function MyNode:onExit()
+    printf("node in scene [%s] method %s",
+        self.sceneName,
+        "onExit")
+end
+
+function MyNode:onEnterTransitionFinish()
+    printf("node in scene [%s] method %s",
+        self.sceneName,
+        "onEnterTransitionFinish")
+end
+
+function MyNode:onExitTransitionStart()
+    printf("node in scene [%s] method %s",
+        self.sceneName,
+        "onExitTransitionStart")
+end
+
+function MyNode:onCleanup()
+    printf("node in scene [%s] method %s",
+        self.sceneName,
+        "onCleanup")
+end
+
+
+---------------------------------
+-- 首先创建一个空白场景
+local sceneInit = display.newScene("sceneInit")
+-- 进入该场景
+display.replaceScene(sceneInit)
+
+local function createTestScene(name)
+    local scene = display.newScene(name)
+    local node = MyNode.new(name)
+    node:setNodeEventEnabled(true) -- 启用节点事件，会调用节点预定义的方法
+    scene:addChild(node)
+    return scene
+end
+
+-- 等待 1.0 秒创建第一个测试场景
+sceneInit:performWithDelay(function()
+    local scene1 = createTestScene("scene1")
+    display.replaceScene(scene1)
+
+    -- 等待 1.0 秒创建第二个测试场景
+    scene1:performWithDelay(function()
+        print("--------")
+        local scene2 = createTestScene("scene2")
+        display.replaceScene(scene2, "random", 1.0)
+    end, 1.0)
+end, 1.0)
+执行结果如下：
+
+node in scene [scene1] method onEnter
+node in scene [scene1] method onEnterTransitionFinish
+--------
+node in scene [scene1] method onExitTransitionStart
+node in scene [scene2] method onEnter
+node in scene [scene1] method onExit
+node in scene [scene2] method onEnterTransitionFinish
+node in scene [scene1] method onCleanup
+
+
+效果和直接注册事件一样。两种方式让开发者可以根据实际需求灵活选择。
