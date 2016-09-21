@@ -1,0 +1,26 @@
+a.lua
+local a = 100
+print("I am a")
+－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+dofile加载并执行:
+b.lua
+dofile("D:\\files\\a.lua")
+
+－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+loadfile装载并编译成中间码，不执行
+b.lua
+file = loadfile("D:\\files\\a.lua")
+local func = assert(file) --assert返回错误信息
+func()
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+b.lua
+f = loadstring("print(\"hello\")")
+f() --输出hello
+
+f = loadstring("function func(a,b) return a+b end")
+f()
+func(1,3)
+

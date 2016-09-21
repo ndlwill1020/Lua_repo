@@ -1,3 +1,60 @@
+用处：1.可以读取函数内部的变量 2.使这些变量始终保持在内存中
+function myFunc(var)
+  local temp = var
+  function innerFunc()
+    temp = temp + 1
+    print("inner"..temp)
+  end
+  return innerFunc
+end
+
+
+local func1 = myFunc(3)
+local func2 = myFunc(10)
+
+for i = 1,10 do
+  func1()
+  func2()
+  print("===========")
+end
+
+
+inner4
+inner11
+===========
+inner5
+inner12
+===========
+inner6
+inner13
+===========
+inner7
+inner14
+===========
+inner8
+inner15
+===========
+inner9
+inner16
+===========
+inner10
+inner17
+===========
+inner11
+inner18
+===========
+inner12
+inner19
+===========
+inner13
+inner20
+===========
+
+
+--------------------------------------------------------------------
+
+
+
 --当一个函数内部嵌套另一个函数定义时，内部的函数体可以访问外部的函数的局部变量
 local function newCounter()
     local i = 0

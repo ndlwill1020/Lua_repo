@@ -9,7 +9,7 @@ print(#t_)  --9  计算的是数组的长度 下标为数字的
 print(table.maxn(t_))  --9  计算的是数组的长度 下标为数字的
 print(i)    --5
 
-
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
 
 
 local a = {} -- 创建一个table
@@ -62,6 +62,28 @@ local tab3 = {color="blue",{x=0,   y=0},thickness=2, npoints=false,
 print(tab3[2].x)     -->{x=-10, y=0}中的x   -10
 
 
+
+table = {1,3,5}
+table[2] = 100
+遍历数组输出1,100,5
+------------------------------------遍历table：
+--循环遍历
+table ＝ {1, 3, nil, x = 2, y = 12}
+for k,v in next,table do --过滤了nil，不会输出
+
+end
+
+--只输出数组的值
+for i,v in ipairs(table) do
+	--输出1=1,2=3
+end
+
+--
+for k,v in pairs(table) do
+	--输出全部，除去nil
+end
+
+
 ========================================================cocos2d-lua关东升
 lua唯一描述数据结构的类型
 
@@ -70,6 +92,8 @@ Student = {id = "100",name = "ndl"}
 Student1 = {["id"] = "100",["name"] = "ndl"}
 
 Student["id"]   Student.id
+
+able.maxn(Student) --字典的长度为0，长度相对于有下标的数组而言
 
 遍历
 for k,v in pairs(Student) do --pairs函数返回键k和值v

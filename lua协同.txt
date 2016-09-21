@@ -19,7 +19,7 @@ coroutine.resume(co)          -- Hello World
 local co = coroutine.create(function ()
      for i = 1, 10 do
           print("co", i)
-          coroutine.yield()
+          coroutine.yield() --挂起
      end
 end)
 
@@ -50,3 +50,14 @@ coroutine.resume(co)     -- 什么都不打印
 print(coroutine.status(co))     -- dead
 coroutine.resume(co)
 当在协同程序的执行中发生任何错误，Lua是不会显示错误消息的，而是将执行权返回给resume调用。当coroutine.resume的第一个返回值为false时，就表明协同程序在运行过程中发生了错误；当值为true时，则表明协同程序运行正常
+
+
+-----------------------------------------------
+local co = coroutine.create(function (a,b)
+     for i = 1, 10 do
+          print(a+b)
+          coroutine.yield() --挂起
+     end
+end)
+coroutine.resume(co,1,2)  --3 只有第一次传进来的值有效
+coroutine.resume(co,2,3)  --3

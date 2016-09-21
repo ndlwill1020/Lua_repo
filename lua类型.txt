@@ -24,6 +24,23 @@ local var --nil  局部变量，作用范围是它所在的函数
 var --nil
 var = 0
 
+
+function MainScene:ctor()
+	a = 100  --全局a
+	local a = 10 --本地a
+	print(a)  --输出本地a 10
+end
+
+可以加代码块do end
+function MainScene:ctor()
+	a = 100  --全局a
+	do
+		local a = 10
+		print(a)  --10
+	end
+	print(a) --100
+end
+
 --------------------------------------type()
 local iValue = 10
 if type(iValue) == "number" then  --type返回值是string

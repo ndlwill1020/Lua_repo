@@ -58,13 +58,17 @@ tab:func()
 
 
 -------------------------------------------------------------变长参数：
+function func(...)
+  return select('#', ...)  --取得。。。长度
+end
+
 for i = 1, select('#', ...) do
     local arg = select(i, ...) -- 得到第i个参数
     -- Do something else
 end
 
 function VarArguments(...)
-     for i, v in ipairs{...} do
+     for i, v in ipairs({...}) do
           print(v)
      end
 end

@@ -37,6 +37,8 @@ math.pi
 --三角函数的参数都是弧度
 print(math.sin(math.rad(30))) -- 0.5
 
+math.deg(math.pi) = 180
+
 取整函数（floor,ceil）:
 floor：返回不大于x的最大整数；向下取整；
 ceil：返回不小于x的最大整数；向上取整。
@@ -52,6 +54,10 @@ min：取参数中的最小值。
 print(math.max(2, 3, 2, 14, 2, 30, -3)) -- 30
 print(math.min(2, 3, 2, 14, 2, 30, -3)) -- -3
 
+math.sqrt(16) = 4
+math.pow(2,5) = 2^5 = 32
+math.atan2(y,x)  算出弧度
+
 
 生成伪随机数的函数（random,randomseed）
 
@@ -61,17 +67,20 @@ print(math.min(2, 3, 2, 14, 2, 30, -3)) -- -3
 
 math.randomseed(os.time()) --设置伪随机数生成器的种子数
 print(math.random()) -- 输出一个大于等于0，小于1的值
-print(math.random(2)) -- 输出不是1就是2
+print(math.random(2)) -- 输出1-2之间   输出不是1就是2
 print(math.random(3, 4)) -- 输出不是3就是4
 
 --------------------------------table库:
 这些函数将table作为数组来操作####################
 插入和删除函数:
- table.insert用于将一个元素插入到一个数组的指定位置，它会移动后续元素以空出空间。
+table.insert用于将一个元素插入到一个数组的指定位置，它会移动后续元素以空出空间。
 如果在调用table.insert时没有指定位置参数，则会将元素添加到数组末尾。
 local tb = {10, 20, 30}
 table.insert(tb, 40) -- 在table的最后插入，结果为：{10, 20, 30, 40}
 table.insert(tb, 2, 15) -- 在table的位置2插入，结果为：{10, 15, 20, 30, 40}
+
+local removeValue = table.remove(tb)  --删除最后个元素  removeValue 等于删除的值
+table.remove(tb,2) --删除第二个元素
 
 ====================排序:
 它可以对一个数组进行排序，还可以指定一个可选的次序函数。这个次序函数有两个参数，
@@ -158,7 +167,7 @@ print(string.byte("abc", -1)) -- 99
 
 
 ########################
-find：
+find：查找
 它只会匹配与自己完全相同的拷贝。当find找到一个模式后，它会返回两个值：匹配到的起始索引和结尾索引；如果没有找到任何匹配，它就返回nil
 local str = "Hello World"
 local i, j = string.find(str, "Hello") -- 返回Hello在str中的起始位置和终止位置
