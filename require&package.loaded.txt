@@ -1,0 +1,9 @@
+require函数:
+1、require函数会搜索目录加载文件
+2、require会判断是否文件已经加载避免重复加载同一文件
+
+当我有一些特殊的需求的时候,就可能会需要反复加载某个lua文件,例如我的文件lua文件动态地改变了,或者一些其他特殊原因
+
+实现反复加载一个lua文件:
+package.loaded[‘test.lua’] = nil
+required(‘test.lua’)

@@ -1,0 +1,468 @@
+资源加密：
+1.
+php文件，里面定义了加密所需要的参数
+<?php
+    ini_set('memory_limit','1024M');
+    return array(
+        'src'      => 'res', 
+        'output'   => 'packres',
+        'prefix'   => '',
+        'excludes' => '',
+        'pack'  => 'files',//files or zip
+        'key'      => 'ilovecocos2dx',
+        'sign'     => 'XXTEA',
+        'whitelists' => 'jpg,png,tmx,plist',
+    );
+?> 
+•src 需加密的脚本所在目录
+•output 加密后文件输出目录
+•pack files、zip 分开文件加密还是打包成zip加密
+•sign 签名，用来识别代码、文件是不是加密的，一般填为"XXTEA"即可
+•key 密钥，简单来说就是加密和解密的钥匙，确保只有你自己知道
+•whitelists 需要加密的文件格式，根据文件的扩展名。
+
+注意，whitelists这个参数是官方版本没有的
+将文件保存为PackRes.php，放在项目根目录（res、src同级目录）
+
+2.
+修改加密资源脚本的文件
+涉及文件目录:引擎目录/quick/bin/lib、引擎目录/quick/bin/lib/quick
+
+因为增加了参数whitelists，所以这里需要修改加密的脚本。
+涉及的文件有两个，/quick/bin/lib/pack_files.php和/quick/bin/lib/quick/FilesPacker.php
+
+pack_files.php文件
+可以看到array里面定义了所有参数，往array的最后加上新增的参数whitelists
+//pack_files.php
+<?php
+    //...
+
+$options = array(
+    //...
+    //...
+    array('c',   'config',     1,      null,        'load options from config file'),
+    array('q',   'quiet',      0,      false,       'quiet'),
+    array('w',   'whitelists',   1,      null,        'whitelists extension, use "," to splite array, example "jpg,png"'),
+);
+
+    //...
+
+FilesPacker.php文件
+定位到validateConfig方法，加入对whitelist的解析
+//FilesPacker.php
+<?php
+
+//...
+
+class FilesPacker
+{
+    //...
+
+    function validateConfig()
+    {
+
+        //...
+
+        if (!empty($this->config['excludes']))
+        {
+            $excludes = explode(',', $this->config['excludes']);
+            array_walk($excludes, function($value) {
+                return trim($value);
+            });
+            $this->config['excludes'] = array_filter($excludes, function($value) {
+                return !empty($value);
+            });
+        }
+        else
+        {
+            $this->config['excludes'] = array();
+        }
+
+        //--------------add code begin--------------
+
+        if (!empty($this->config['whitelists']))
+        {
+            $whitelists = explode(',', $this->config['whitelists']);
+            array_walk($whitelists, function($value) {
+                return trim($value);
+            });
+            $this->config['whitelists'] = array_filter($whitelists, function($value) {
+                return !empty($value);
+            });
+        }
+
+        //----------add code end--------------
+
+        if ($this->config['pack'] != self::COMPILE_ZIP
+            && $this->config['pack'] != self::COMPILE_FILES
+            && $this->config['pack'] != self::COMPILE_C
+            )
+        {
+            printf("ERR: invalid pack mode %s\n", $this->config['pack']);
+            return false;
+        }
+
+定位到prepareForPack方法，加入whitelist的文件过滤
+    protected function prepareForPack(array $files)
+    {
+
+        //...
+
+        foreach ($this->config['excludes'] as $key => $exclude)
+        {
+            if (substr($moduleName, 0, strlen($exclude)) == $exclude)
+            {
+                unset($files[$key]);
+                $skip = true;
+                break;
+            }
+        }
+
+        if ($skip) continue;
+
+        //--------------add code begin--------------
+
+        if (!empty($this->config['whitelists'])) {
+            $isDirty = false;
+            foreach ($this->config['whitelists'] as $key => $whitelist)
+            {
+
+                if (end(explode('SPLIT_CHAR', $moduleName)) == $whitelist)
+                {
+                    $isDirty = true;
+                    break;
+                }
+            }
+
+            if (!$isDirty) {
+                unset($files[$key]);
+                continue;
+            }
+        }
+
+        //--------------add code end--------------
+
+        $bytesName = 'lua_m_' . strtolower(str_replace(array('.', '-'), '_', $moduleName));
+
+        //...
+
+3.
+生成加密资源脚本
+#coding=utf-8
+#!/usr/bin/python
+import os 
+import os.path 
+import sys, getopt  
+import subprocess
+import shutil 
+import time,  datetime
+import platform
+from hashlib import md5
+import hashlib  
+import binascii
+
+def removeDir(dirName):
+    if not os.path.isdir(dirName): 
+        return
+    filelist=[]
+    filelist=os.listdir(dirName)
+    for f in filelist:
+        filepath = os.path.join( dirName, f )
+        if os.path.isfile(filepath):
+            os.remove(filepath)
+        elif os.path.isdir(filepath):
+            shutil.rmtree(filepath,True)
+
+def initEnvironment():
+    global APP_ROOT #工程根目录 
+    global APP_ANDROID_ROOT #安卓根目录
+    global QUICK_ROOT #引擎根目录
+    global QUICK_BIN_DIR #引擎bin目录
+    global APP_RESOURCE_ROOT #生成app的资源目录
+    global APP_RESOURCE_RES_DIR #资源目录
+
+    global APP_BUILD_USE_JIT #是否使用jit
+
+    global PHP_NAME #php
+    global SCRIPT_NAME #执行脚本文件名
+
+    global BUILD_PLATFORM #生成app对应的平台
+
+    SYSTEM_TYPE = platform.system() #当前操作系统
+
+    APP_ROOT = os.getcwd() #当前目录
+    APP_ANDROID_ROOT = APP_ROOT + "/frameworks/runtime-src/proj.android"
+    QUICK_ROOT = os.getenv('QUICK_V3_ROOT')
+
+    if QUICK_ROOT == None: #quick引擎目录未指定，可手动指定路径或者运行引擎目录下相应脚本
+        print "QUICK_V3_ROOT not set, please run setup_win.bat/setup_mac.sh in engine root or set QUICK_ROOT path"
+        return False
+
+    if(SYSTEM_TYPE =="Windows"): 
+        QUICK_BIN_DIR = QUICK_ROOT + "quick/bin"
+        PHP_NAME = QUICK_BIN_DIR + "/win32/php.exe" #windows
+        BUILD_PLATFORM = "android" #windows dafault build android
+        SCRIPT_NAME = "/compile_scripts.bat"
+    else:
+        PHP_NAME = "php"
+        BUILD_PLATFORM = "ios" #mac default build ios
+        QUICK_BIN_DIR = QUICK_ROOT + "/quick/bin" #mac add '/'
+        SCRIPT_NAME = "/compile_scripts.sh"
+
+
+    if(BUILD_PLATFORM =="ios"):
+        APP_BUILD_USE_JIT = False
+        APP_RESOURCE_ROOT = APP_ROOT + "/Resources" 
+        APP_RESOURCE_RES_DIR = APP_RESOURCE_ROOT + "/res"
+
+    else:
+        APP_BUILD_USE_JIT = True
+        APP_RESOURCE_ROOT = APP_ANDROID_ROOT + "/assets" #default build android
+        APP_RESOURCE_RES_DIR = APP_RESOURCE_ROOT + "/res"
+
+    print 'App root: %s' %(APP_ROOT)
+    print 'App resource root: %s' %(APP_RESOURCE_ROOT)
+    return True
+
+def compileScriptFile(compileFileName, srcName, compileMode):
+    scriptDir = APP_RESOURCE_RES_DIR + "/code/"
+    if not os.path.exists(scriptDir):
+        os.makedirs(scriptDir)
+    try:
+        scriptsName = QUICK_BIN_DIR + SCRIPT_NAME
+        srcName = APP_ROOT + "/" + srcName
+        outputName = scriptDir + compileFileName
+        args = [scriptsName,'-i',srcName,'-o',outputName,'-e',compileMode,'-es','XXTEA','-ek','ilovecocos2dx']
+
+        if APP_BUILD_USE_JIT:
+            args.append('-jit')
+
+        proc = subprocess.Popen(args, shell=False, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+        while proc.poll() == None:  
+            outputStr = proc.stdout.readline()
+            print outputStr,
+        print proc.stdout.read(),
+    except Exception,e:  
+        print Exception,":",e
+
+def packRes():
+    removeDir(APP_ROOT + "/packres/") #--->删除旧加密资源
+
+    scriptName = QUICK_BIN_DIR + "/lib/pack_files.php"
+    try:
+        args = [PHP_NAME, scriptName, '-c', 'PackRes.php']
+        proc = subprocess.Popen(args, shell=False, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+        while proc.poll() == None:  
+            print proc.stdout.readline(),
+        print proc.stdout.read()
+    except Exception,e:  
+        print Exception,":",e
+
+if __name__ == '__main__': 
+    isInit = initEnvironment()
+
+    if isInit == True:
+        #加密资源
+        packRes()
+
+        #将src目录下的所有脚本加密打包成game.zip
+        compileScriptFile("game.zip", "src", "xxtea_zip")
+
+使用方法：
+1.保存为compileScript.py文件
+2.放到项目根目录（res、src同级目录）
+3.运行命令行工具，cd到该目录，执行python compileScript.py
+4.若屏幕输出 "create output files in xx/xx/packres ." 说明执行成功
+
+4、修改引擎文件
+1、把frameworks/cocos2d-x/external/xxtea文件夹里面的xxtea.h和xxtea.cpp复制到frameworks/cocos2d-x/cocos/base目录中
+2、引用文件，也就是让编译器知道xxtea文件在哪
+windows
+打开vs，打开lubcocos2d项目，展开base，把xxtea两个文件拖到base里面即可
+
+android
+打开frameworks/cocos2d-x/cocos/Android.mk文件
+在LOCAL_SRC_FILES中加入xxtea.cpp文件
+#Android.mk
+
+#...
+
+LOCAL_SRC_FILES := \
+cocos2d.cpp \
+
+#...
+
+base/ObjectFactory.cpp \
+base/xxtea.cpp \ #加入此项
+renderer/CCBatchCommand.cpp \
+
+#...
+
+mac
+打开xcode，打开cocos2dlib.xcodeproj，展开base，把xxtea两个文件拖到base里面即可
+
+
+
+文件读取 CCFileUtils：
+因为避免和引擎旧的接口混淆，所以这里是新增两个方法而不是修改旧的方法
+
+头文件CCFileUtils.h加入两个public方法声明
+//CCFileUtils.h
+
+//...
+class CC_DLL FileUtils
+{
+public:
+
+    //...
+    static unsigned char* getDecryptFileData(const char* pszFileName, const char* pszMode, unsigned long * pSize);
+
+    static Data getDecryptDataFromFile(const std::string& filename);
+
+protected:
+    //...
+
+Cpp文件CCFileUtils.cpp中加入头文件和方法定义
+//CCFileUtils.cpp
+
+//...
+#include "xxtea/xxtea.h" 
+
+//..
+Data FileUtils::getDecryptDataFromFile(const std::string &filename)
+{
+    unsigned long sz;
+    unsigned char * buf = FileUtils::getDecryptFileData(filename.c_str(), "rb", &sz);
+    if (!buf) {
+        return Data::Null;
+    }
+    Data data;
+    data.fastSet(buf, sz);
+    return data;
+}
+
+unsigned char* FileUtils::getDecryptFileData(const char* pszFileName, const char* pszMode, unsigned long * pSize)
+{
+    ssize_t size;
+    unsigned char* buf = FileUtils::getInstance()->getFileData(pszFileName, pszMode, &size);
+    if (NULL == buf || size<1) return NULL;
+
+    const char *xxteaKey = "ilovecocos2dx";
+    int xxteaKeyLen = strlen(xxteaKey);
+    const char *xxteaSign = "XXTEA";
+    int xxteaSignLen = strlen(xxteaSign);
+    unsigned char* buffer = NULL;
+
+    bool isXXTEA = true;
+    for (int i = 0; isXXTEA && i<xxteaSignLen && i<size; ++i) {
+        isXXTEA = buf[i] == xxteaSign[i];
+    }
+
+    if (isXXTEA) { // decrypt XXTEA
+        xxtea_long len = 0;
+        buffer = xxtea_decrypt(
+            buf + xxteaSignLen,
+            (xxtea_long)size - (xxtea_long)xxteaSignLen,
+            (unsigned char*)xxteaKey,
+            (xxtea_long)xxteaKeyLen,
+            &len);
+        delete[]buf;
+        buf = NULL;
+        size = len;
+    }
+    else {
+        buffer = buf;
+    }
+
+    if (pSize) *pSize = size;
+    return buffer;
+}
+
+
+
+资源读取：
+涉及加密的资源有图片文件(png、jpg)，xml文件(plist、tmx)
+
+图片文件：
+//CCImage.cpp
+//目录:frameworks/cocos2d-x/cocos/platform/
+
+//...
+bool Image::initWithImageFile(const std::string& path)
+{
+    //...
+        SDL_FreeSurface(iSurf);
+    #else
+        //修改此处即可
+        Data data = FileUtils::getInstance()->getDecryptDataFromFile(_filePath);
+
+        if (!data.isNull())
+        {
+
+    //...
+}
+
+xml文件
+
+在windows/android平台下，xml解析使用CCSAXParser，在ios平台下则是用系统类NSDictionary来解析，所以这里要修改两处地方
+
+对于windows/android平台
+//CCSAXParser.cpp
+//目录:frameworks/cocos2d-x/cocos/platform/
+
+//...
+bool SAXParser::parse(const std::string& filename)
+{
+    bool ret = false;
+    //修改此处即可
+    Data data = FileUtils::getInstance()->getDecryptDataFromFile(filename);
+    if (!data.isNull())
+    {
+        ret = parse((const char*)data.getBytes(), data.getSize());
+    }
+
+    return ret;
+}
+//...
+
+对于ios平台
+//CCFileUtils-apple.mm
+//frameworks/cocos2d-x/cocos/platform/apple
+
+//...
+
+ValueMap FileUtilsApple::getValueMapFromFile(const std::string& filename)
+{
+    std::string fullPath = fullPathForFilename(filename);
+
+    //注释下面两句代码
+//    NSString* path = [NSString stringWithUTF8String:fullPath.c_str()];
+//    NSDictionary* dict = [NSDictionary dictionaryWithContentsOfFile:path];
+    
+    //------add code begin-------
+    unsigned long fileSize = 0;
+    unsigned char* pFileData = FileUtils::getDecryptFileData(fullPath.c_str(), "rb", &fileSize);
+    NSData *data = [[[NSData alloc] initWithBytes:pFileData length:fileSize] autorelease];
+    delete []pFileData;
+    NSPropertyListFormat format;
+    NSString *error;
+    NSMutableDictionary *dict = (NSMutableDictionary *)[
+                                                         NSPropertyListSerialization propertyListFromData:data
+                                                         mutabilityOption:NSPropertyListMutableContainersAndLeaves
+                                                         format:&format
+                                                         errorDescription:&error];
+
+    //------add code end-----------
+
+    ValueMap ret;
+
+    if (dict != nil)
+    {
+        for (id key in [dict allKeys])
+        {
+            id value = [dict objectForKey:key];
+            addValueToDict(key, value, ret);
+        }
+    }
+    return ret;
+}

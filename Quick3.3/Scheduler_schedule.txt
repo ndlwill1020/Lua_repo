@@ -1,0 +1,3 @@
+cc.Director:getInstance():getScheduler():scheduleScriptFunc(function(dt)
+		print("-----------------------------------")
+end, 1.0, false)

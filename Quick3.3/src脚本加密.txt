@@ -1,0 +1,142 @@
+代码加密，加密方式是XXTEA
+
+脚本加密:D:\quick3.3\LandscapeDemo\src的脚本加密
+quick框架已经封装好加密模块，与加密有关的文件在引擎目录/quick/bin下。
+加密脚本：compile_scripts.bat、compile_scripts.sh
+
+参数：
+•-i 需加密的脚本所在目录
+•-o 加密后文件输出目录
+•-e 加密方式，有xxtea_zip、xxtea_chunk两种方式，前者是打包一起加密，后者是分文件加密
+•-es 签名，用来识别代码、文件是不是加密的，一般填为"XXTEA"即可
+•-ek 密钥，简单来说就是加密和解密的钥匙，确保只有你自己知道
+•-jit 使用luajit编译脚本，quick3.3默认是用lua而不是luajit，所以此参数可不加
+说明：更多可选参数可在/quick/bin/lib/compile_scripts.php找到说明
+
+
+（基于跨平台考虑，本系列的脚本基于python语言）
+#coding=utf-8
+#!/usr/bin/python
+import os 
+import os.path 
+import sys, getopt  
+import subprocess
+import shutil 
+import time,  datetime
+import platform
+from hashlib import md5
+import hashlib  
+import binascii
+
+def initEnvironment():
+    global APP_ROOT #工程根目录 
+    global APP_ANDROID_ROOT #安卓根目录
+    global QUICK_ROOT #引擎根目录
+    global QUICK_BIN_DIR #引擎bin目录
+    global APP_RESOURCE_ROOT #生成app的资源目录
+    global APP_RESOURCE_RES_DIR #资源目录
+
+    global APP_BUILD_USE_JIT #是否使用jit
+
+    global SCRIPT_NAME #执行脚本文件名
+
+    global BUILD_PLATFORM #生成app对应的平台
+
+    SYSTEM_TYPE = platform.system() #当前操作系统
+
+    APP_ROOT = os.getcwd() #当前目录
+    APP_ANDROID_ROOT = APP_ROOT + "/frameworks/runtime-src/proj.android"
+    QUICK_ROOT = os.getenv('QUICK_V3_ROOT')
+
+    if QUICK_ROOT == None: #quick引擎目录未指定，可手动指定路径或者运行引擎目录下相应脚本
+        print "QUICK_V3_ROOT not set, please run setup_win.bat/setup_mac.sh in engine root or set QUICK_ROOT path"
+        return False
+
+    if(SYSTEM_TYPE =="Windows"): 
+        BUILD_PLATFORM = "android" #windows dafault build android
+        QUICK_BIN_DIR = QUICK_ROOT + "quick/bin"
+        SCRIPT_NAME = "/compile_scripts.bat"
+    else:
+        BUILD_PLATFORM = "ios" #mac default build ios
+        QUICK_BIN_DIR = QUICK_ROOT + "/quick/bin" #mac add '/'
+        SCRIPT_NAME = "/compile_scripts.sh"
+
+
+    if(BUILD_PLATFORM =="ios"):
+        APP_BUILD_USE_JIT = False
+        APP_RESOURCE_ROOT = APP_ROOT + "/Resources" 
+        APP_RESOURCE_RES_DIR = APP_RESOURCE_ROOT + "/res"
+
+    else:
+        APP_BUILD_USE_JIT = True
+        APP_RESOURCE_ROOT = APP_ANDROID_ROOT + "/assets" #default build android
+        APP_RESOURCE_RES_DIR = APP_RESOURCE_ROOT + "/res"
+
+    print 'App root: %s' %(APP_ROOT)
+    print 'App resource root: %s' %(APP_RESOURCE_ROOT)
+    return True
+
+def compileScriptFile(compileFileName, srcName, compileMode):
+    scriptDir = APP_RESOURCE_RES_DIR + "/code/"
+    if not os.path.exists(scriptDir):
+        os.makedirs(scriptDir)
+    try:
+        scriptsName = QUICK_BIN_DIR + SCRIPT_NAME
+        srcName = APP_ROOT + "/" + srcName
+        outputName = scriptDir + compileFileName
+        args = [scriptsName,'-i',srcName,'-o',outputName,'-e',compileMode,'-es','XXTEA','-ek','ilovecocos2dx']
+
+        if APP_BUILD_USE_JIT:
+            args.append('-jit')
+
+        proc = subprocess.Popen(args, shell=False, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+        while proc.poll() == None:  
+            outputStr = proc.stdout.readline()
+            print outputStr,
+        print proc.stdout.read(),
+    except Exception,e:  
+        print Exception,":",e
+
+if __name__ == '__main__': 
+    isInit = initEnvironment()
+
+    if isInit == True:
+        #将src目录下的所有脚本加密打包成game.zip
+        compileScriptFile("game.zip", "src", "xxtea_zip")
+        
+
+使用方法：
+1.保存为compileScript.py文件
+2.放到项目根目录（res、src同级目录）
+3.运行命令行工具，cd到该目录，执行python compileScript.py
+4.若屏幕输出 "create ZIP archive xx/xx/game.zip done". 说明执行成功
+
+
+打开/frameworks/runtime-src/Classes/AppDelegate.cpp文件
+在applicationDidFinishLaunching方法的最后改成如下代码
+bool AppDelegate::applicationDidFinishLaunching(){
+    //..
+    //..
+
+    FileUtils *utils = FileUtils::getInstance();
+
+    const char *zipFilename ="code/game.zip";
+    
+    std::string zipFilePath = utils->fullPathForFilename(zipFilename);
+
+    if (zipFilePath.compare(zipFilename) == 0) //no game zip file use default lua file
+    {
+        engine->executeScriptFile(ConfigParser::getInstance()->getEntryFile().c_str()); 
+    }
+    else
+    {
+        stack->loadChunksFromZIP(zipFilename);
+        stack->executeString("require 'main'");
+    }
+
+    return true
+}
+
+这段代码会判断res/code/game.zip是否存在，若存在则加载加密代码压缩包，否则执行旧的逻辑。这样改的好处是开发过程中可直接运行lua代码，发布版本则执行加密脚本
+注意发布版本时需要移除src目录中的代码(教程的最后会给出完整脚本，自动生成app所需资源)
+

@@ -210,6 +210,53 @@ print(objectA.getName())
 
 这种设计给予存储在self table中所有东西完全的私密性。当调用newObject返回以后，就无法直接访问这个table了。只能通过newObject中创建的函数来访问这个self table；也就相当于self table中保存的都是私有的，外部是无法直接访问的
 
+-------------------------------------------------------cocos2d-quick:
+User.lua
+local User = class("User")
+User.id = 1
+User.name = "cc"
+
+function User:ctor()
+    print(self.__cname)
+end
 
 
+
+function User:setId(id)
+    --User.id = id  --这么写相当于上面的User.id是静态变量，可以使得多个对象共享一块数据  test1
+    self.id = id --只赋给自己这个对象 test2
+end
+
+function User:getId()
+    --return User.id
+    return self.id
+end
+
+return User
+
+
+
+---------------------------
+local ClassUser = require("User")
+local user1 = ClassUser.new()
+local user2 = ClassUser.new()
+
+user1:setId(255)  --test1   user2:getId()  得到255
+user1:setId(255)  --test2   user2:getId()  得到1
+
+
+
+---------------------------继承:
+
+Teacher.lua
+local User = require("User")
+local Teacher = class("Teacher", User)
+
+--覆盖了父类的方法
+function Teacher:ctor()
+    self.super:ctor() --这样先调用父类的方法
+end
+
+
+return Teacher
 
