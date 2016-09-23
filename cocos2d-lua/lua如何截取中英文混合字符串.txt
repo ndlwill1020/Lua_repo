@@ -33,7 +33,7 @@ function strWidth(inputStr)
             offset = 4                                            --4字节字符 (1111 0XXX 240-247, 10XX XXXX, 10XX XXXX, 10XX XXXX)
         end
 		
-		local char = string.sub(inputstr, index, index + byteCount - 1)
+		local char = string.sub(inputStr, index, index + offset - 1)
 		print(char)  --看看这个是什么
 		index = index + offset -- 重置下一字节的索引
 		width = width + 1
