@@ -72,7 +72,7 @@ void size_to_luaval(lua_State *L,const Size& sz){
 	lua_newtable(L);--在栈中压入空table
 	lua_pushstring(L,"width");--压入字符串
 	lua_pushnumber(L,(lua_Number)sz.width);--压入数字
-	lua_rawset(L,-3);--等价于t[k] = v的操作，t位于-3的位置，不触发table的newindex事件，函数完成后自动弹出k，v
+	lua_rawset(L,-3);--等价于t[k] = v的操作，t位于-3的位置，不触发table的newindex事件，函数完成后自动弹出k，v  #####
 	lua_pushstring(L,"height");
 	lua_pushnumber(L,(lua_Number)sz.height);
 	lua_rawset(L,-3);

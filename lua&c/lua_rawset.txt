@@ -1,0 +1,40 @@
+lua_rawget:
+用法同lua_gettable,但更快(因为当key不存在时不用访问元方法__index)
+lua_rawset:
+用法同lua_settable,但更快(因为当key不存在时不用访问元方法__newindex)
+
+
+lua_rawgeti必须为数值键
+lua_getglobal(L, "mytable") <== push mytable
+lua_rawgeti(L, -1, 1)       <== push mytable[1]，作用同下面两行调用
+--lua_pushnumber(L, 1)      <== push key 1
+--lua_rawget(L,-2)          <== pop key 1, push mytable[1]
+
+lua_rawseti必须为数值键
+lua_getglobal(L, "mytable") <== push mytable
+lua_pushstring(L, "abc")    <== push value "abc"
+lua_rawseti(L, -2, 1)       <== mytable[1] = "abc", pop value "abc"
+
+
+eg:
+Window = {}  
+  
+Window.prototype = {x = 0 ,y = 0 ,width = 100 ,height = 100,}  
+Window.mt = {}  
+function Window.new(o)  
+    setmetatable(o ,Window.mt)  
+    return o  
+end  
+Window.mt.__index = function (t ,key)  
+    return 1000  
+end  
+Window.mt.__newindex = function (table ,key ,value)  
+    if key == "wangbin" then  
+        rawset(table ,"wangbin" ,"yes,i am")  
+    end  
+end  
+w = Window.new{x = 10 ,y = 20}  
+
+print(w.wangbin) --1000
+print(rawget(w ,w.wangbin)) --打印结果是:nil。这里的元表中__index函数就不再起作用了,不会触发元表的__index
+
